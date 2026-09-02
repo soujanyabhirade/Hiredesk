@@ -25,6 +25,7 @@ describe('CandidatesService', () => {
       name: 'John Doe',
       email: 'john@example.com',
       phone: '1234567890',
+      jobId: 1,
     };
 
     expect(service.create(candidate)).toEqual(candidate);
