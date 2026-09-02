@@ -1,0 +1,11 @@
+// use prisma-next
+
+model Job {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  location    String?
+  status      String   @default("OPEN")
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+}
