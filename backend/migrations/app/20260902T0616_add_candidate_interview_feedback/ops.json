@@ -1,0 +1,404 @@
+[
+  {
+    "id": "table.candidate",
+    "label": "Create table \"candidate\"",
+    "summary": "Creates table \"candidate\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"candidate\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"candidate\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"candidate\"",
+        "sql": "CREATE TABLE \"public\".\"candidate\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"jobId\" int4 NOT NULL,\n  \"name\" text NOT NULL,\n  \"phone\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"candidate\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"candidate\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.feedback",
+    "label": "Create table \"feedback\"",
+    "summary": "Creates table \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"feedback\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"feedback\"",
+        "sql": "CREATE TABLE \"public\".\"feedback\" (\n  \"comments\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"interviewId\" int4 NOT NULL,\n  \"rating\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"feedback\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.interview",
+    "label": "Create table \"interview\"",
+    "summary": "Creates table \"interview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "interview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"interview\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"interview\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"interview\"",
+        "sql": "CREATE TABLE \"public\".\"interview\" (\n  \"candidateId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"scheduledAt\" timestamptz NOT NULL,\n  \"status\" text DEFAULT 'SCHEDULED' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"interview\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"interview\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.candidate.candidate_email_key",
+    "label": "Add unique constraint on \"candidate\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "candidate_email_key",
+        "table": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"candidate_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"candidate_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"candidate\" ADD CONSTRAINT \"candidate_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"candidate_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.candidate.candidate_jobId_idx_623c8f77",
+    "label": "Create index \"candidate_jobId_idx_623c8f77\" on \"candidate\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "candidate_jobId_idx_623c8f77",
+        "table": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"candidate_jobId_idx_623c8f77\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"candidate_jobId_idx_623c8f77\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"candidate_jobId_idx_623c8f77\"",
+        "sql": "CREATE INDEX \"candidate_jobId_idx_623c8f77\" ON \"public\".\"candidate\" (\"jobId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"candidate_jobId_idx_623c8f77\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"candidate_jobId_idx_623c8f77\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.feedback.feedback_interviewId_idx_766b64f2",
+    "label": "Create index \"feedback_interviewId_idx_766b64f2\" on \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "feedback_interviewId_idx_766b64f2",
+        "table": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"feedback_interviewId_idx_766b64f2\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_interviewId_idx_766b64f2\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"feedback_interviewId_idx_766b64f2\"",
+        "sql": "CREATE INDEX \"feedback_interviewId_idx_766b64f2\" ON \"public\".\"feedback\" (\"interviewId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"feedback_interviewId_idx_766b64f2\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"feedback_interviewId_idx_766b64f2\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.interview.interview_candidateId_idx_462b5869",
+    "label": "Create index \"interview_candidateId_idx_462b5869\" on \"interview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "interview_candidateId_idx_462b5869",
+        "table": "interview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"interview_candidateId_idx_462b5869\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"interview_candidateId_idx_462b5869\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"interview_candidateId_idx_462b5869\"",
+        "sql": "CREATE INDEX \"interview_candidateId_idx_462b5869\" ON \"public\".\"interview\" (\"candidateId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"interview_candidateId_idx_462b5869\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"interview_candidateId_idx_462b5869\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.candidate.candidate_jobId_fkey",
+    "label": "Add foreign key \"candidate_jobId_fkey\" on \"candidate\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "candidate_jobId_fkey",
+        "table": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"candidate_jobId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_jobId_fkey",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"candidate_jobId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"candidate\"\nADD CONSTRAINT \"candidate_jobId_fkey\"\nFOREIGN KEY (\"jobId\")\nREFERENCES \"public\".\"job\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"candidate_jobId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_jobId_fkey",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.feedback.feedback_interviewId_fkey",
+    "label": "Add foreign key \"feedback_interviewId_fkey\" on \"feedback\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "feedback_interviewId_fkey",
+        "table": "feedback"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"feedback_interviewId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "feedback_interviewId_fkey",
+          "public",
+          "\"public\".\"feedback\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"feedback_interviewId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"feedback\"\nADD CONSTRAINT \"feedback_interviewId_fkey\"\nFOREIGN KEY (\"interviewId\")\nREFERENCES \"public\".\"interview\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"feedback_interviewId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "feedback_interviewId_fkey",
+          "public",
+          "\"public\".\"feedback\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.interview.interview_candidateId_fkey",
+    "label": "Add foreign key \"interview_candidateId_fkey\" on \"interview\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "interview_candidateId_fkey",
+        "table": "interview"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"interview_candidateId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "interview_candidateId_fkey",
+          "public",
+          "\"public\".\"interview\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"interview_candidateId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"interview\"\nADD CONSTRAINT \"interview_candidateId_fkey\"\nFOREIGN KEY (\"candidateId\")\nREFERENCES \"public\".\"candidate\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"interview_candidateId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "interview_candidateId_fkey",
+          "public",
+          "\"public\".\"interview\""
+        ]
+      }
+    ]
+  }
+]

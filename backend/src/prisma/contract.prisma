@@ -1,11 +1,44 @@
 // use prisma-next
-
 model Job {
-  id          Int      @id @default(autoincrement())
+  id          Int                        @id @default(autoincrement())
   title       String
   description String?
   location    String?
-  status      String   @default("OPEN")
-  createdAt   TimestamptzString @default(now())
+  status      String                     @default("OPEN")
+  candidates  Candidate[]
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model Candidate {
+  id         Int                        @id @default(autoincrement())
+  name       String
+  email      String                     @unique
+  phone      String?
+  job        Job                        @relation(fields:[jobId], references:[id])
+  jobId      Int
+  interviews Interview[]
+  createdAt  TimestamptzString          @default(now())
+  updatedAt  temporal.updatedAtString()
+}
+
+model Interview {
+  id          Int                        @id @default(autoincrement())
+  candidate   Candidate                  @relation(fields:[candidateId], references:[id])
+  candidateId Int
+  scheduledAt TimestamptzString
+  status      String                     @default("SCHEDULED")
+  feedback    Feedback[]
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model Feedback {
+  id          Int                        @id @default(autoincrement())
+  interview   Interview                  @relation(fields:[interviewId], references:[id])
+  interviewId Int
+  rating      Int
+  comments    String?
+  createdAt   TimestamptzString          @default(now())
   updatedAt   temporal.updatedAtString()
 }
