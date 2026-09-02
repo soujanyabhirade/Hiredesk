@@ -41,3 +41,29 @@ NestJS Application
             ├── Controller
             |
             └── Service
+## Engineering Conventions
+
+### Backend Technology
+- Framework: NestJS 11
+- Language: TypeScript
+- Runtime: Node.js
+
+### Development Commands
+- `npm run start:dev` - development mode with watch
+- `npm run build` - build the application
+- `npm start` - start the application
+- `npm test` - run Jest tests
+- `npm run test:watch` - run tests in watch mode
+- `npm run test:cov` - run tests with coverage
+
+### Testing
+- Testing framework: Jest
+- TypeScript testing support: ts-jest
+
+### Dependency Management
+- Runtime packages are kept in `dependencies`.
+- Development/build/test tools are kept in `devDependencies`.
+
+### Code Quality
+- TypeScript is used throughout the backend.
+- ESLint and Prettier conventions should be checked from their configuration files.
