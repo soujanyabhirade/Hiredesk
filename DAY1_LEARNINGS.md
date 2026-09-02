@@ -67,3 +67,10 @@ NestJS Application
 ### Code Quality
 - TypeScript is used throughout the backend.
 - ESLint and Prettier conventions should be checked from their configuration files.
+### Formatting
+- Prettier is used for code formatting.
+- Strings use single quotes.
+- Trailing commas are used where supported.
+### Linting
+- No ESLint configuration file is currently present in the backend.
+- No project-specific ESLint rules were identified.
