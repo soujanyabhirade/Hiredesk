@@ -19,6 +19,10 @@
     "job": {
       "model": "Job",
       "namespace": "public"
+    },
+    "user": {
+      "model": "User",
+      "namespace": "public"
     }
   },
   "domain": {
@@ -422,6 +426,67 @@
               "namespaceId": "public",
               "table": "job"
             }
+          },
+          "User": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "password": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "email": {
+                  "column": "email"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "password": {
+                  "column": "password"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "user"
+            }
           }
         }
       }
@@ -733,6 +798,57 @@
                 ]
               },
               "uniques": []
+            },
+            "user": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "password": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "email"
+                  ]
+                }
+              ]
             }
           }
         },
@@ -740,10 +856,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "917dddc94c17e62387a574ab5b76d68d35ae27cf3706f11c0afac4782156323f"
+    "storageHash": "58bed48f2a49c0b3d0139a54d7ef677f3fe7effc5d86cdd7a0c21fceb69b7e9c"
   },
   "execution": {
-    "executionHash": "855e98afd8ae84133591a66ade89978e58f8f82eccf5437b74370a83173f8ae8",
+    "executionHash": "0dd7195ff7cd7c2fa9ac1b5da5d03b638d54042b437689f9ebd1d79ce13a81fe",
     "mutations": {
       "defaults": [
         {
@@ -804,6 +920,21 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "job"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "updatedAt",
+            "namespace": "public",
+            "table": "user"
           }
         }
       ]

@@ -6,6 +6,7 @@ import { CandidatesModule } from './candidates/candidates.module';
 import { JobsModule } from './jobs/jobs.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { FeedbackModule } from './feedback/feedback.module';
     JobsModule,
     InterviewsModule,
     FeedbackModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
