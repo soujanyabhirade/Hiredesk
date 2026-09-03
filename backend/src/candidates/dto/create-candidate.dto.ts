@@ -1,4 +1,9 @@
-import { IsEmail, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateCandidateDto {
   @IsString()
@@ -14,4 +19,7 @@ export class CreateCandidateDto {
   @IsOptional()
   @IsString()
   resumeUrl?: string;
+
+  @IsInt()
+  jobId!: number;
 }

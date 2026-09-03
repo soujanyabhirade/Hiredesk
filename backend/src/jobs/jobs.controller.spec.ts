@@ -1,24 +1,88 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JobsController } from './jobs.controller';
-import { JobsService } from './jobs.service';
+import { JobsController } from './jobs.controller.js';
+import { JobsService } from './jobs.service.js';
+
+jest.mock('./jobs.service.js', () => ({
+  JobsService: jest.fn(),
+}));
 
 describe('JobsController', () => {
   let controller: JobsController;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [JobsController],
-      providers: [JobsService],
-    }).compile();
+  const jobsService = {
+    getJobs: jest.fn(),
+    health: jest.fn(),
+    create: jest.fn(),
+  };
 
-    controller = module.get<JobsController>(JobsController);
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    controller = new JobsController(
+      jobsService as unknown as JobsService,
+    );
   });
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should return jobs', () => {
-    expect(controller.getJobs()).toEqual([]);
+  describe('getJobs', () => {
+    it('should return jobs', async () => {
+      const jobs = [
+        {
+          id: 1,
+          title: 'Backend Developer',
+          description: 'NestJS developer',
+          location: 'Remote',
+          status: 'OPEN',
+        },
+      ];
+
+      jobsService.getJobs.mockResolvedValue(jobs);
+
+      const result = await controller.getJobs();
+
+      expect(result).toEqual(jobs);
+      expect(jobsService.getJobs).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getHealth', () => {
+    it('should return jobs health status', () => {
+      const health = {
+        status: 'ok',
+        module: 'jobs',
+      };
+
+      jobsService.health.mockReturnValue(health);
+
+      const result = controller.getHealth();
+
+      expect(result).toEqual(health);
+      expect(jobsService.health).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('createJob', () => {
+    it('should create a job', async () => {
+      const input = {
+        title: 'Backend Developer',
+        description: 'NestJS developer',
+        location: 'Remote',
+      };
+
+      const createdJob = {
+        id: 1,
+        ...input,
+        status: 'OPEN',
+      };
+
+      jobsService.create.mockResolvedValue(createdJob);
+
+      const result = await controller.createJob(input);
+
+      expect(result).toEqual(createdJob);
+      expect(jobsService.create).toHaveBeenCalledWith(input);
+    });
   });
 });

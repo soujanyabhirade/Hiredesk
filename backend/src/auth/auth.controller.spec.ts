@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController } from './auth.controller.js';
+import { AuthService } from './auth.service.js';
 
 // Mock the AuthService module so Jest does NOT load the real service.
 // This prevents Prisma / @prisma/orm-postgres from being loaded.

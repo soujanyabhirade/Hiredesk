@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "module": "preserve",
+    "module": "NodeNext",
     "target": "ES2021",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
 
     "rootDir": "./src",
     "outDir": "./dist",
@@ -25,11 +25,13 @@
     "strictNullChecks": true,
 
     "resolveJsonModule": true,
-"isolatedModules": true,
-"types": [
-  "node",
-  "jest"
-]
+
+    "isolatedModules": true,
+
+    "types": [
+      "node",
+      "jest"
+    ]
   },
 
   "include": [

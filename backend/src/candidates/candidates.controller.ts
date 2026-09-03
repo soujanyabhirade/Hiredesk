@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { CandidatesService } from './candidates.service';
-import { CreateCandidateDto } from './dto/create-candidate.dto';
+import { CandidatesService } from './candidates.service.js';
+import { CreateCandidateDto } from './dto/create-candidate.dto.js';
 
 @Controller('candidates')
 export class CandidatesController {
