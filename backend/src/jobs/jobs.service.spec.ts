@@ -46,6 +46,7 @@ describe('JobsService', () => {
       const result = await service.getJobs();
 
       expect(result).toEqual(jobs);
+
       expect(db.orm.public.Job.all).toHaveBeenCalledTimes(1);
     });
 

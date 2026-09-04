@@ -1,13 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type Candidate = {
+  id?: number;
   name: string;
   email: string;
   phone?: string;
+  resumeUrl?: string;
   jobId: number;
 };
+
+const API_URL = "http://localhost:3001";
 
 export default function Home() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -16,8 +20,28 @@ export default function Home() {
   const [phone, setPhone] = useState("");
   const [jobId, setJobId] = useState("1");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    async function loadCandidates() {
+      try {
+        const response = await fetch(`${API_URL}/candidates`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load candidates.");
+        }
+
+        const data = await response.json();
+        setCandidates(data);
+      } catch {
+        setError("Could not connect to the backend.");
+      }
+    }
+
+    loadCandidates();
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -31,19 +55,41 @@ export default function Home() {
       return;
     }
 
-    const candidate: Candidate = {
+    const candidate = {
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim() || undefined,
       jobId: Number(jobId),
     };
 
-    setCandidates((current) => [...current, candidate]);
+    try {
+      setLoading(true);
 
-    setName("");
-    setEmail("");
-    setPhone("");
-    setJobId("1");
+      const response = await fetch(`${API_URL}/candidates`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(candidate),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create candidate.");
+      }
+
+      const createdCandidate = await response.json();
+
+      setCandidates((current) => [...current, createdCandidate]);
+
+      setName("");
+      setEmail("");
+      setPhone("");
+      setJobId("1");
+    } catch {
+      setError("Could not create candidate. Please check the backend.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -150,9 +196,10 @@ export default function Home() {
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700"
+                disabled={loading}
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Add Candidate
+                {loading ? "Adding..." : "Add Candidate"}
               </button>
             </form>
           </div>
@@ -183,7 +230,7 @@ export default function Home() {
               <div className="mt-6 space-y-3">
                 {candidates.map((candidate, index) => (
                   <article
-                    key={`${candidate.email}-${index}`}
+                    key={`${candidate.email}-${candidate.id ?? index}`}
                     className="rounded-lg border border-slate-200 p-4"
                   >
                     <div className="flex items-start justify-between gap-4">
