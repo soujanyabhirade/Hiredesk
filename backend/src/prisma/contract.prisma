@@ -43,9 +43,11 @@ model Feedback {
   updatedAt   temporal.updatedAtString()
 }
 model User {
-  id        Int              @id @default(autoincrement())
-  email     String           @unique
-  password  String
-  createdAt TimestamptzString @default(now())
-  updatedAt temporal.updatedAtString()
+  id               Int              @id @default(autoincrement())
+  email            String           @unique
+  password         String
+  refreshTokenHash String?
+  role             String           @default("MENTOR")
+  createdAt        TimestamptzString @default(now())
+  updatedAt        temporal.updatedAtString()
 }

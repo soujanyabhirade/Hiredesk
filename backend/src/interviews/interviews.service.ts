@@ -1,16 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import { db } from '../prisma/db.js';
+
+interface CreateInterviewInput {
+  candidateId: number;
+  scheduledAt: string;
+  status?: string;
+}
 
 @Injectable()
 export class InterviewsService {
-  private readonly interviews: any[] = [];
-
-  create(interview: any) {
-    this.interviews.push(interview);
-    return interview;
+  async create(interview: CreateInterviewInput) {
+    return db.orm.public.Interview.create({
+      candidateId: interview.candidateId,
+      scheduledAt: interview.scheduledAt,
+      ...(interview.status
+        ? { status: interview.status }
+        : {}),
+    });
   }
 
-  findAll() {
-    return this.interviews;
+  async findAll() {
+    return db.orm.public.Interview.all();
   }
 
   getHealth() {
