@@ -19,7 +19,7 @@ export class CandidatesController {
   ) {}
 
   @Post()
-  @Roles('ADMIN')
+  @Roles('ADMIN', 'RECRUITER')
   create(@Body() createCandidateDto: CreateCandidateDto) {
     return this.candidatesService.create(createCandidateDto);
   }

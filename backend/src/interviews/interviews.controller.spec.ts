@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InterviewsController } from './interviews.controller.js';
 import { InterviewsService } from './interviews.service.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 
 jest.mock('../prisma/db.js', () => ({
   db: {
@@ -42,7 +44,16 @@ describe('InterviewsController', () => {
             useValue: interviewsService,
           },
         ],
-      }).compile();
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .overrideGuard(RolesGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .compile();
 
     controller =
       module.get<InterviewsController>(

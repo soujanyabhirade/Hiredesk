@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FeedbackController } from './feedback.controller.js';
 import { FeedbackService } from './feedback.service.js';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 
 jest.mock('../prisma/db.js', () => ({
   db: {
@@ -42,7 +44,16 @@ describe('FeedbackController', () => {
             useValue: feedbackService,
           },
         ],
-      }).compile();
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .overrideGuard(RolesGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .compile();
 
     controller =
       module.get<FeedbackController>(
@@ -65,7 +76,7 @@ describe('FeedbackController', () => {
   it('should create feedback', () => {
     const feedback = {
       interviewId: 1,
-      rating: 4,
+      rating: 5,
       comments: 'Good interview',
     };
 
