@@ -21,6 +21,7 @@ jest.mock('../prisma/db.js', () => ({
 
 import * as bcrypt from 'bcryptjs';
 import { db } from '../prisma/db.js';
+import { createHash } from 'node:crypto';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -129,6 +130,11 @@ describe('AuthService', () => {
         password: 'password123',
       });
 
+      const refreshTokenDigest =
+        createHash('sha256')
+          .update('refresh-token')
+          .digest('hex');
+
       expect(result).toEqual({
         access_token: 'access-token',
         refresh_token: 'refresh-token',
@@ -140,7 +146,7 @@ describe('AuthService', () => {
       );
 
       expect(bcrypt.hash).toHaveBeenCalledWith(
-        'refresh-token',
+        refreshTokenDigest,
         10,
       );
 
@@ -168,6 +174,7 @@ describe('AuthService', () => {
         },
         {
           expiresIn: '7d',
+          jwtid: expect.any(String),
         },
       );
     });
@@ -241,7 +248,19 @@ describe('AuthService', () => {
         .mockResolvedValueOnce('new-access-token')
         .mockResolvedValueOnce('new-refresh-token');
 
-      const result = await service.refresh('refresh-token');
+      const result = await service.refresh(
+        'refresh-token',
+      );
+
+      const refreshTokenDigest =
+        createHash('sha256')
+          .update('refresh-token')
+          .digest('hex');
+
+      const newRefreshTokenDigest =
+        createHash('sha256')
+          .update('new-refresh-token')
+          .digest('hex');
 
       expect(result).toEqual({
         access_token: 'new-access-token',
@@ -253,7 +272,7 @@ describe('AuthService', () => {
       );
 
       expect(bcrypt.compare).toHaveBeenCalledWith(
-        'refresh-token',
+        refreshTokenDigest,
         'hashed-refresh-token',
       );
 
@@ -275,11 +294,12 @@ describe('AuthService', () => {
         },
         {
           expiresIn: '7d',
+          jwtid: expect.any(String),
         },
       );
 
       expect(bcrypt.hash).toHaveBeenCalledWith(
-        'new-refresh-token',
+        newRefreshTokenDigest,
         10,
       );
 

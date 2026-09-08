@@ -58,3 +58,18 @@ Response:
   "status": "ok",
   "service": "HireDesk API"
 }
+## Authentication
+
+HireDesk uses JWT authentication for user login.
+
+### Register
+
+**POST /auth/register**
+
+Request:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
