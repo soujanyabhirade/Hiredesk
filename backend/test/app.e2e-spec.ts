@@ -340,6 +340,127 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/interviews (POST) with status', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Interview E2E Candidate',
+        email: `interview-candidate-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-interview-create-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'INTERVIEWER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .post('/interviews')
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        candidateId: candidate.id,
+        scheduledAt: '2026-09-15T10:00:00.000Z',
+        status: 'SCHEDULED',
+      })
+      .expect(201)
+      .expect((response) => {
+        expect(response.body.id).toBeDefined();
+        expect(response.body.candidateId).toBe(
+          candidate.id,
+        );
+        expect(response.body.status).toBe(
+          'SCHEDULED',
+        );
+      });
+  });
+
+  it('/interviews (POST) without status', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Interview E2E Candidate Without Status',
+        email: `interview-candidate-no-status-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-interview-create-no-status-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'INTERVIEWER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .post('/interviews')
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        candidateId: candidate.id,
+        scheduledAt: '2026-09-16T10:00:00.000Z',
+      })
+      .expect(201)
+      .expect((response) => {
+        expect(response.body.id).toBeDefined();
+        expect(response.body.candidateId).toBe(
+          candidate.id,
+        );
+        expect(response.body.status).toBe(
+          'SCHEDULED',
+        );
+      });
+  });
+
   it('/feedback (GET) without authentication', async () => {
     return request(app.getHttpServer())
       .get('/feedback')
@@ -375,7 +496,7 @@ describe('AppController (e2e)', () => {
           email,
           password,
         })
-      .expect(201);
+        .expect(201);
 
     return request(app.getHttpServer())
       .get('/feedback')
@@ -386,6 +507,199 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect((response) => {
         expect(Array.isArray(response.body)).toBe(true);
+      });
+  });
+
+  it('/feedback/health (GET) with INTERVIEWER role', async () => {
+    const email =
+      `e2e-feedback-health-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'INTERVIEWER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .get('/feedback/health')
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .expect(200)
+      .expect({
+        status: 'ok',
+        module: 'feedback',
+      });
+  });
+
+  it('/feedback (POST) with comments', async () => {
+    const job =
+      await db.orm.public.Job.create({
+        title: 'Feedback E2E Job',
+        description: 'Job for feedback E2E test',
+        location: 'Bangalore',
+      });
+
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Feedback E2E Candidate',
+        email: `feedback-candidate-${Date.now()}@example.com`,
+        jobId: job.id,
+      });
+
+    const interview =
+      await db.orm.public.Interview.create({
+        candidateId: candidate.id,
+        scheduledAt: '2026-09-17T10:00:00.000Z',
+        status: 'SCHEDULED',
+      });
+
+    const email =
+      `e2e-feedback-create-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'INTERVIEWER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .post('/feedback')
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        interviewId: interview.id,
+        rating: 5,
+        comments: 'Excellent interview performance',
+      })
+      .expect(201)
+      .expect((response) => {
+        expect(response.body.id).toBeDefined();
+        expect(response.body.interviewId).toBe(
+          interview.id,
+        );
+        expect(response.body.rating).toBe(5);
+        expect(response.body.comments).toBe(
+          'Excellent interview performance',
+        );
+      });
+  });
+
+  it('/feedback (POST) without comments', async () => {
+    const job =
+      await db.orm.public.Job.create({
+        title: 'Feedback E2E Job Without Comments',
+        description: 'Job for feedback E2E test',
+        location: 'Bangalore',
+      });
+
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Feedback E2E Candidate Without Comments',
+        email: `feedback-candidate-no-comments-${Date.now()}@example.com`,
+        jobId: job.id,
+      });
+
+    const interview =
+      await db.orm.public.Interview.create({
+        candidateId: candidate.id,
+        scheduledAt: '2026-09-18T10:00:00.000Z',
+        status: 'SCHEDULED',
+      });
+
+    const email =
+      `e2e-feedback-create-no-comments-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'INTERVIEWER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .post('/feedback')
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        interviewId: interview.id,
+        rating: 4,
+      })
+      .expect(201)
+      .expect((response) => {
+        expect(response.body.id).toBeDefined();
+        expect(response.body.interviewId).toBe(
+          interview.id,
+        );
+        expect(response.body.rating).toBe(4);
+        expect(response.body.comments).toBeNull();
       });
   });
 
