@@ -1,9 +1,8 @@
-Yes. Here is the **complete `README.md` file**. Replace everything in your current README with this:
-
-````markdown
 # HireDesk
 
 HireDesk is a hiring-pipeline application for recruiters.
+
+The project contains a NestJS backend, PostgreSQL database, Prisma ORM, JWT authentication, role-based authorization, and automated unit and E2E tests.
 
 ## Architecture
 
@@ -21,7 +20,7 @@ Services / Business Logic
 Prisma ORM
   ↓
 PostgreSQL Database
-````
+```
 
 ### Backend Flow
 
@@ -45,38 +44,37 @@ HTTP Response
 
 ### Main Backend Responsibilities
 
-* Controller: receives and handles HTTP requests
-* Service: contains application and business logic
-* Prisma: communicates with the PostgreSQL database
-* PostgreSQL: stores application data
-* Module: organizes related controllers and services
-* Guards: protect authenticated and role-based endpoints
+- Controller: receives and handles HTTP requests
+- Service: contains application and business logic
+- Prisma: communicates with the PostgreSQL database
+- PostgreSQL: stores application data
+- Module: organizes related controllers and services
+- Guards: protect authenticated and role-based endpoints
 
 ## Tech Stack
 
 ### Backend
 
-* NestJS
-* TypeScript
-* Prisma ORM
-* PostgreSQL 17
-* JWT
-* bcrypt
-* Jest
-* Supertest
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL 17
+- JWT
+- bcrypt
+- Jest
+- Supertest
 
 ### Frontend
 
-* Next.js
-* React
-* Tailwind CSS
+- Next.js
+- React
+- Tailwind CSS
 
 ### Development Tools
 
-* Git
-* GitHub
-* Postman / Swagger
-* Docker
+- Git
+- GitHub
+- Postman / Swagger
 
 ## Project Structure
 
@@ -93,46 +91,45 @@ HireDesk/
 │   │   └── prisma/
 │   │
 │   └── test/
+│       └── app.e2e-spec.ts
 │
 ├── frontend/
 │
 └── README.md
 ```
 
-## Running the Application
+## Prerequisites
 
-The project contains separate frontend and backend applications.
+Before running the backend, install:
 
-### Backend
+- Node.js
+- npm
+- PostgreSQL 17
+- Git
 
-Open a terminal and run:
+The backend requires a PostgreSQL database.
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone <your-github-repository-url>
+cd HireDesk
+```
+
+Install backend dependencies:
 
 ```bash
 cd backend
 npm install
-npm run start:dev
 ```
 
-The backend runs on:
-
-```text
-http://localhost:3001
-```
-
-### Frontend
-
-Open another terminal and run:
+Install frontend dependencies:
 
 ```bash
-cd frontend
+cd ../frontend
 npm install
-npm run dev
-```
-
-The frontend runs on:
-
-```text
-http://localhost:3000
 ```
 
 ## Environment Variables
@@ -148,7 +145,14 @@ DATABASE_URL="your-postgresql-connection-string"
 JWT_SECRET="your-jwt-secret"
 ```
 
-Do not commit `.env` files or passwords/secrets to GitHub.
+Example format:
+
+```env
+DATABASE_URL="postgresql://USERNAME:PASSWORD@localhost:5432/hiredesk"
+JWT_SECRET="your-secret"
+```
+
+Do not commit `.env` files, passwords, database credentials, or JWT secrets to GitHub.
 
 ## Database
 
@@ -178,6 +182,73 @@ The JWT signing secret is configured using:
 
 ```text
 JWT_SECRET
+```
+
+### Database Contract
+
+The backend uses the Prisma database contract.
+
+The contract can be generated with:
+
+```bash
+cd backend
+npm run contract:emit
+```
+
+## Running the Application
+
+The project contains separate frontend and backend applications.
+
+### Backend
+
+Open a terminal:
+
+```bash
+cd backend
+npm install
+npm run start:dev
+```
+
+The backend runs on:
+
+```text
+http://localhost:3001
+```
+
+### Frontend
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs on:
+
+```text
+http://localhost:3000
+```
+
+## Development Ports
+
+```text
+Frontend
+http://localhost:3000
+
+Backend
+http://localhost:3001
+```
+
+The frontend communicates with the backend API:
+
+```text
+Next.js :3000
+      ↓
+NestJS :3001
+      ↓
+PostgreSQL
 ```
 
 ## Authentication
@@ -259,9 +330,13 @@ Successful response:
 
 HireDesk uses refresh-token rotation.
 
-After a successful refresh, a new refresh token is issued and the previous refresh token becomes invalid.
+After a successful refresh:
 
-Refresh tokens are stored securely using a SHA-256 digest followed by bcrypt hashing.
+1. A new refresh token is issued.
+2. The previous refresh token becomes invalid.
+3. The new refresh-token hash replaces the previous stored hash.
+
+Refresh tokens are stored using a SHA-256 digest followed by bcrypt hashing.
 
 ## Authorization and RBAC
 
@@ -269,16 +344,16 @@ HireDesk uses role-based access control.
 
 Supported roles include:
 
-* ADMIN
-* RECRUITER
-* INTERVIEWER
-* MENTOR
+- ADMIN
+- RECRUITER
+- INTERVIEWER
+- MENTOR
 
 Protected endpoints use:
 
-* `JwtAuthGuard` for authentication
-* `RolesGuard` for authorization
-* `@Roles()` to define allowed roles
+- `JwtAuthGuard` for authentication
+- `RolesGuard` for authorization
+- `@Roles()` to define allowed roles
 
 For example, candidate creation is restricted to:
 
@@ -308,17 +383,33 @@ Example response:
 }
 ```
 
+### Authentication
+
+**POST `/auth/register`**
+
+Registers a new user.
+
+**POST `/auth/login`**
+
+Authenticates a user and returns access and refresh tokens.
+
+**POST `/auth/refresh`**
+
+Refreshes the access token and rotates the refresh token.
+
 ### Candidates
 
 **GET `/candidates`**
 
 Returns the list of candidates.
 
+Authentication is required.
+
 **POST `/candidates`**
 
 Creates a new candidate.
 
-Candidate creation requires an authenticated user with one of these roles:
+Candidate creation requires:
 
 ```text
 ADMIN
@@ -341,91 +432,221 @@ Creates a new job.
 
 ### Interviews
 
-Interview endpoints are protected by JWT authentication and role-based authorization.
+**GET `/interviews`**
+
+Returns interviews.
+
+The endpoint requires authentication and one of:
+
+```text
+ADMIN
+RECRUITER
+INTERVIEWER
+```
+
+**POST `/interviews`**
+
+Creates an interview.
+
+The endpoint requires authentication and one of:
+
+```text
+ADMIN
+RECRUITER
+INTERVIEWER
+```
+
+**GET `/interviews/health`**
+
+Returns the interviews module health status.
 
 ### Feedback
 
-Feedback endpoints are protected by JWT authentication and role-based authorization.
+**GET `/feedback`**
+
+Returns feedback records.
+
+The endpoint requires:
+
+```text
+ADMIN
+INTERVIEWER
+```
+
+**POST `/feedback`**
+
+Creates feedback.
+
+The endpoint requires:
+
+```text
+ADMIN
+INTERVIEWER
+```
+
+**GET `/feedback/health`**
+
+Returns the feedback module health status.
 
 ## Testing
 
 HireDesk uses Jest for backend testing.
 
-### Unit Tests
+There are two main testing approaches:
+
+```text
+Unit Testing
+     ↓
+Test individual application logic
+```
+
+and:
+
+```text
+E2E Testing
+     ↓
+Test the application through HTTP
+```
+
+## Unit Tests
 
 Unit tests test individual pieces of application logic.
 
 Database dependencies such as Prisma can be mocked during unit testing.
 
-Run unit tests:
+Run the unit tests:
 
 ```bash
 cd backend
 npm test
 ```
 
-### E2E Tests
+The unit tests cover application services and authentication logic.
+
+## E2E Tests
 
 E2E means end-to-end testing.
 
-E2E tests send HTTP requests to the running NestJS application and verify the complete request flow.
+E2E tests send HTTP requests to the NestJS application and verify the complete request flow.
 
-HireDesk uses Jest and Supertest for E2E testing.
+HireDesk uses:
 
-Run E2E tests:
+- Jest
+- Supertest
+- NestJS testing utilities
+- PostgreSQL
 
-```bash
-npm run test:e2e
+The E2E test file is:
+
+```text
+backend/test/app.e2e-spec.ts
 ```
 
-### E2E Coverage
+### Run E2E Tests
+
+From the `backend` directory:
+
+```bash
+npm test -- --config ./test/jest-e2e.json
+```
+
+Expected result:
+
+```text
+Test Suites: 1 passed, 1 total
+Tests:       23 passed, 23 total
+```
+
+## E2E Test Coverage
 
 Run E2E tests with coverage:
 
 ```bash
-npm run test:e2e -- --coverage
+npm test -- --config ./test/jest-e2e.json --coverage
 ```
 
-Coverage helps show which parts of the application were executed by the tests.
+The current E2E coverage result is:
 
-The core E2E suite covers areas including:
+```text
+Statements: 92.22%
+Branches:   72.83%
+Functions:  89.13%
+Lines:      91.25%
+```
 
-* Authentication
-* Login
-* Refresh tokens
-* Refresh-token rotation
-* Authorization
-* Candidates
-* Interviews
-* Feedback
-* Jobs
+The E2E suite currently contains:
 
-### Important Test Scenarios
+```text
+23 passing tests
+```
 
-Tests cover both successful and failure cases.
+### Core E2E Areas
 
-Examples include:
+The E2E tests cover:
 
-* Successful registration
-* Duplicate registration
-* Successful login
-* Invalid email
-* Invalid password
-* Missing authentication
-* Invalid JWT
-* Unauthorized role access
-* Successful refresh
-* Invalid refresh token
-* Refresh-token rotation
-* Reuse of an old refresh token
-* Candidate API behavior
-* Interview API behavior
-* Feedback API behavior
-* Jobs API behavior
+- Application health
+- User registration
+- User login
+- Invalid login password
+- Refresh tokens
+- Refresh-token rotation
+- Authentication protection
+- Role-based authorization
+- Candidates
+- Interviews
+- Feedback
+- Jobs
+
+### Interview Tests
+
+The interview tests cover:
+
+- GET interviews without authentication
+- GET interviews with an interviewer role
+- POST interview with a status
+- POST interview without a status
+
+The two POST tests also verify the different `status` paths in the interview service.
+
+### Feedback Tests
+
+The feedback tests cover:
+
+- GET feedback without authentication
+- GET feedback with interviewer role
+- GET feedback health
+- POST feedback with comments
+- POST feedback without comments
+
+The two POST tests verify both paths for optional feedback comments.
+
+### Refresh Token Rotation Test
+
+The refresh-token rotation E2E test verifies:
+
+```text
+Login
+  ↓
+Old refresh token
+  ↓
+POST /auth/refresh
+  ↓
+New refresh token
+  ↓
+Old refresh token becomes invalid
+```
+
+The test verifies that:
+
+- A new refresh token is created.
+- The new token is different from the old token.
+- The stored hash matches the new token.
+- The old token no longer matches.
+- Reusing the old token returns `401 Unauthorized`.
 
 ## Authentication Flow
 
-The authentication flow works like this:
+### Register
 
 ```text
 Register
@@ -435,12 +656,12 @@ Password hashed with bcrypt
 User stored in PostgreSQL
 ```
 
-Login:
+### Login
 
 ```text
 Login
   ↓
-Check user
+Find user
   ↓
 Compare password
   ↓
@@ -448,12 +669,14 @@ Create access token
   ↓
 Create refresh token
   ↓
+Hash refresh token
+  ↓
 Store refresh-token hash
   ↓
 Return tokens
 ```
 
-Refresh:
+### Refresh
 
 ```text
 Refresh token
@@ -473,7 +696,7 @@ Replace stored refresh-token hash
 Return new tokens
 ```
 
-The old refresh token cannot be reused after rotation.
+The old refresh token cannot be reused after successful rotation.
 
 ## Protected API Flow
 
@@ -513,6 +736,50 @@ If the JWT is valid but the user does not have the required role:
 403 Forbidden
 ```
 
+## Testing Approach
+
+### Unit Testing
+
+Unit tests focus on individual pieces of application logic.
+
+Dependencies such as Prisma can be mocked.
+
+```text
+Service
+  ↓
+Mock dependency
+  ↓
+Expected result
+```
+
+### E2E Testing
+
+E2E tests verify the application through HTTP.
+
+```text
+Supertest
+  ↓
+HTTP Request
+  ↓
+NestJS Controller
+  ↓
+Service
+  ↓
+Prisma
+  ↓
+PostgreSQL
+  ↓
+HTTP Response
+```
+
+### Why Both?
+
+Unit tests help verify application logic in isolation.
+
+E2E tests help verify that the complete application flow works correctly.
+
+Both provide different types of confidence.
+
 ## Git Workflow
 
 The project uses Git and GitHub for source control.
@@ -549,60 +816,56 @@ git push origin main
 
 Run relevant tests before committing changes.
 
-## Development Ports
+## Security Notes
 
-```text
-Frontend
-http://localhost:3000
-
-Backend
-http://localhost:3001
-```
-
-The frontend communicates with the backend API.
-
-```text
-Next.js :3000
-      ↓
-NestJS :3001
-      ↓
-PostgreSQL
-```
+- Passwords are never returned by the API.
+- Passwords are hashed using bcrypt.
+- Refresh tokens are not stored as plain text.
+- Refresh tokens are stored using a SHA-256 digest followed by bcrypt hashing.
+- JWT-protected endpoints require a valid access token.
+- Role-protected endpoints require the correct user role.
+- Secrets should be stored in environment variables.
+- `.env` files should not be committed to Git.
+- Database credentials should not be committed to GitHub.
 
 ## Current Backend Features
 
 The backend currently includes:
 
-* JWT authentication
-* User registration
-* User login
-* bcrypt password hashing
-* Refresh-token rotation
-* JWT authentication guard
-* Role-based authorization
-* Candidates module
-* Interviews module
-* Feedback module
-* Jobs module
-* Prisma ORM
-* PostgreSQL database
-* Jest unit tests
-* Jest + Supertest E2E tests
-* E2E coverage testing
-
-## Security Notes
-
-* Passwords are never returned by the API.
-* Passwords are hashed using bcrypt.
-* Refresh tokens are not stored as plain text.
-* Refresh tokens are hashed before being stored.
-* JWT-protected endpoints require a valid access token.
-* Role-protected endpoints require the correct user role.
-* Secrets should be stored in environment variables.
-* `.env` files should not be committed to Git.
+- JWT authentication
+- User registration
+- User login
+- bcrypt password hashing
+- Refresh-token rotation
+- JWT authentication guard
+- Role-based authorization
+- Candidates module
+- Interviews module
+- Feedback module
+- Jobs module
+- Prisma ORM
+- PostgreSQL database
+- Jest unit tests
+- Jest + Supertest E2E tests
+- E2E coverage testing
 
 ## Project Status
 
-HireDesk backend authentication, RBAC, database integration, and backend E2E testing are implemented.
+The HireDesk backend currently has:
+
+- Authentication
+- JWT access tokens
+- Refresh tokens
+- Refresh-token rotation
+- Role-based authorization
+- PostgreSQL database integration
+- Prisma ORM
+- Candidates module
+- Interviews module
+- Feedback module
+- Jobs module
+- Unit tests
+- 23 passing E2E tests
+- E2E coverage above 80% for statements, lines, and functions
 
 Frontend development is being developed separately using Next.js.
