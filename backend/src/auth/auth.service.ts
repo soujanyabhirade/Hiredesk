@@ -4,6 +4,8 @@ import {
   ConflictException,
   ForbiddenException,
   NotFoundException,
+  InternalServerErrorException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -19,11 +21,13 @@ import { LoginDto } from './dto/login.dto.js';
 import { ProvisionUserDto } from './dto/provision-user.dto.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { ActivateUserDto } from './dto/activate-user.dto.js';
+import { EmailService } from '../email/email.service.js';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -271,6 +275,25 @@ export class AuthService {
       activationExpiresAt,
     });
 
+    const frontendUrl = process.env['FRONTEND_URL']?.replace(/\/+$/, '');
+    if (!frontendUrl) {
+      await this.rollbackProvisionedUser(user.id);
+      throw new ServiceUnavailableException(
+        'Email delivery is not configured. Set FRONTEND_URL before provisioning a user.',
+      );
+    }
+
+    try {
+      await this.emailService.sendActivationEmail(
+        dto.email,
+        dto.name,
+        `${frontendUrl}/activate/${activationToken}`,
+      );
+    } catch (error) {
+      await this.rollbackProvisionedUser(user.id);
+      throw error;
+    }
+
     return {
       user: {
         id: user.id,
@@ -279,9 +302,18 @@ export class AuthService {
         role: user.role,
         status: user.status,
       },
-      activationToken,
-      activationExpiresAt,
+      message: 'User provisioned successfully. An activation email has been sent.',
     };
+  }
+
+  private async rollbackProvisionedUser(id: number) {
+    try {
+      await db.orm.public.User.where({ id }).delete();
+    } catch {
+      throw new InternalServerErrorException(
+        'The user could not be provisioned because the activation email failed, and the temporary account could not be rolled back.',
+      );
+    }
   }
 
   async updateUser(id: number, dto: UpdateUserDto, currentUserId: number) {

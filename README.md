@@ -240,6 +240,23 @@ ADMIN_PASSWORD="replace-with-a-strong-password"
 ADMIN_NAME="HireDesk Admin"
 ```
 
+Admin-provisioned `RECRUITER`, `INTERVIEWER`, and `MENTOR` accounts also
+require SMTP configuration so HireDesk can send their activation email:
+
+```env
+SMTP_HOST=""
+SMTP_PORT="587"
+SMTP_USER=""
+SMTP_PASSWORD=""
+SMTP_FROM=""
+FRONTEND_URL="http://localhost:3000"
+```
+
+`FRONTEND_URL` is used to build the one-time activation link. Do not commit
+SMTP credentials. For local testing, provide credentials from an SMTP testing
+provider or another SMTP service you are authorized to use. Production email
+delivery requires real production SMTP or email-service configuration.
+
 Google OAuth is optional and reads:
 
 ```env
@@ -335,6 +352,41 @@ the existing account and updates its name, role, and status; it does not reset
 the existing password. Therefore, `Admin account confirmed` does not mean that
 the supplied password was replaced.
 
+The Admin bootstrap account is created or confirmed separately and does not
+use activation email onboarding.
+
+## Internal User Activation Email
+
+The internal-user onboarding flow is:
+
+```text
+Admin provisions a RECRUITER, INTERVIEWER, or MENTOR
+        ↓
+HireDesk sends an activation email
+        ↓
+User clicks the activation link
+        ↓
+User sets a password
+        ↓
+Account becomes ACTIVE
+        ↓
+User logs in normally
+```
+
+The activation email contains a link to `/activate/<token>`. Activation tokens
+are hashed before storage, expire, and are invalidated after successful
+activation. The raw token is not returned by the provisioning API or shown in
+the Admin User Management UI.
+
+If SMTP or `FRONTEND_URL` is not configured, the backend can still start, but
+provisioning an internal user fails clearly and the temporary pending user is
+rolled back. HireDesk does not pretend that an email was sent and does not
+display the token as a fallback.
+
+Candidates remain recruitment records and are not authenticated users. They do
+not receive passwords, activation emails, JWTs, refresh tokens, or User
+records.
+
 ## Frontend Setup
 
 Open Terminal 2:
@@ -416,16 +468,18 @@ authenticates tokens and `RolesGuard` enforces `@Roles()` declarations.
 2. The admin opens `/users`.
 3. The admin provisions a user.
 4. The admin assigns `ADMIN`, `RECRUITER`, `INTERVIEWER`, or `MENTOR`.
-5. The UI displays the one-time activation token.
-6. The invited user opens `/activate/<token>`.
+5. HireDesk sends an activation email to a `RECRUITER`, `INTERVIEWER`, or
+   `MENTOR`.
+6. The invited user opens `/activate/<token>` from the email.
 7. The invited user sets a password.
 8. The account becomes `ACTIVE`.
 9. The user logs in through `/login`.
 10. Backend guards use the assigned role.
 
-There is no email delivery service in this repository. The activation token is
-returned once to the administrator for local testing and must be handled
-securely. A new user does not choose an admin or recruiter role during login.
+Email delivery uses the reusable SMTP email service in this repository.
+SMTP configuration is required for provisioning these internal users, and
+activation links must be handled securely. A new user does not choose an admin
+or recruiter role during login.
 
 ## Main Frontend Routes
 
@@ -510,7 +564,7 @@ All paths below are relative to the backend origin.
 | `GET /health` | Backend health. | Public |
 | `GET /dashboard` | Counts, recent candidates, and upcoming interviews. | JWT |
 | `GET /users` | List users without password/token fields. | `ADMIN` |
-| `POST /users` | Provision a pending user and return activation token. | `ADMIN` |
+| `POST /users` | Provision a pending user and send an activation email. | `ADMIN` |
 | `PUT /users/:id` | Change another user's role or status. | `ADMIN` |
 
 ## Testing
@@ -592,8 +646,8 @@ finish, but all 30 tests pass.
 - [ ] Open `/users` as an admin.
 - [ ] Provision a `RECRUITER`.
 - [ ] Verify the new account is `PENDING`.
-- [ ] Copy the displayed activation token securely.
-- [ ] Open `/activate/<token>` and set a password.
+- [ ] Confirm the activation email was delivered.
+- [ ] Open the activation link from the email and set a password.
 - [ ] Log in as the activated recruiter.
 - [ ] Verify recruiter access to permitted recruitment features.
 - [ ] Verify a non-admin cannot use `/users`.

@@ -14,6 +14,7 @@ type User = {
 };
 
 const roles = ["ADMIN", "RECRUITER", "INTERVIEWER", "MENTOR"];
+const provisionableRoles = ["RECRUITER", "INTERVIEWER", "MENTOR"];
 const PAGE_SIZE = 10;
 
 export default function UsersPage() {
@@ -21,7 +22,6 @@ export default function UsersPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("RECRUITER");
-  const [activationToken, setActivationToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -59,7 +59,6 @@ export default function UsersPage() {
     setSaving(true);
     setError("");
     setSuccess("");
-    setActivationToken("");
     try {
       const response = await apiFetch("/api/users", {
         method: "POST",
@@ -69,10 +68,9 @@ export default function UsersPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data?.message || "Failed to provision user.");
       setUsers((current) => [...current, data.user]);
-      setActivationToken(data.activationToken);
       setName("");
       setEmail("");
-      setSuccess("User provisioned. Share the activation token securely.");
+      setSuccess(data.message || "User provisioned successfully. An activation email has been sent.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to provision user.");
     } finally {
@@ -115,11 +113,10 @@ export default function UsersPage() {
             <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Name" className="rounded-lg border border-slate-300 px-3 py-2" />
             <input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email" className="rounded-lg border border-slate-300 px-3 py-2" />
             <select value={role} onChange={(event) => setRole(event.target.value)} className="rounded-lg border border-slate-300 px-3 py-2">
-              {roles.map((item) => <option key={item} value={item}>{item}</option>)}
+              {provisionableRoles.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
             <button disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Provisioning..." : "Provision User"}</button>
           </form>
-          {activationToken && <p className="mt-4 break-all rounded-lg bg-amber-50 p-4 text-sm text-amber-900">Activation token: <strong>{activationToken}</strong></p>}
         </section>
 
         <section className="rounded-xl bg-white p-6 shadow-sm">

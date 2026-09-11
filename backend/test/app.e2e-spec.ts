@@ -4,6 +4,7 @@ import {
   describe,
   it,
   expect,
+  jest,
   beforeAll,
   afterAll,
 } from '@jest/globals';
@@ -16,6 +17,7 @@ import { createHash } from 'node:crypto';
 
 import { AppModule } from '../src/app.module.js';
 import { db } from '../src/prisma/db.js';
+import { EmailService } from '../src/email/email.service.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -24,10 +26,16 @@ describe('AppController (e2e)', () => {
     const moduleFixture: TestingModule =
       await Test.createTestingModule({
         imports: [AppModule],
-      }).compile();
+      })
+        .overrideProvider(EmailService)
+        .useValue({
+          sendActivationEmail: jest.fn().mockResolvedValue(undefined),
+        })
+        .compile();
 
     app = moduleFixture.createNestApplication();
 
+    process.env['FRONTEND_URL'] = 'http://localhost:3000';
     await app.init();
   });
 
@@ -1089,11 +1097,21 @@ describe('AppController (e2e)', () => {
 
       expect(response.body.user.role).toBe(role);
       expect(response.body.user.status).toBe('PENDING');
-      expect(response.body.activationToken).toBeDefined();
+      expect(response.body.message).toBe(
+        'User provisioned successfully. An activation email has been sent.',
+      );
+      expect(response.body.activationToken).toBeUndefined();
 
+      const activationToken = `e2e-activation-${role}-${Date.now()}`;
+      await db.orm.public.User.where({ email }).update({
+        activationTokenHash: createHash('sha256')
+          .update(activationToken)
+          .digest('hex'),
+        activationExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+      });
       await request(app.getHttpServer())
         .post('/auth/activate')
-        .send({ token: response.body.activationToken, password: 'UserPassword123!' })
+        .send({ token: activationToken, password: 'UserPassword123!' })
         .expect(201);
 
       const login = await request(app.getHttpServer())

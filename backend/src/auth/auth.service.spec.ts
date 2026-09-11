@@ -11,6 +11,7 @@ jest.mock('../prisma/db.js', () => ({
       public: {
         User: {
           first: jest.fn(),
+          all: jest.fn(),
           create: jest.fn(),
           where: jest.fn(),
         },
@@ -30,9 +31,12 @@ describe('AuthService', () => {
     signAsync: jest.fn(),
     verifyAsync: jest.fn(),
   };
+  const emailService = {
+    sendActivationEmail: jest.fn(),
+  };
 
   beforeEach(() => {
-    service = new AuthService(jwtService as any);
+    service = new AuthService(jwtService as any, emailService as any);
 
     jest.clearAllMocks();
 
@@ -41,6 +45,11 @@ describe('AuthService', () => {
     ).mockReturnValue({
       update: jest.fn().mockResolvedValue({}),
     });
+    process.env['FRONTEND_URL'] = 'http://localhost:3000';
+  });
+
+  afterEach(() => {
+    delete process.env['FRONTEND_URL'];
   });
 
   describe('register', () => {
@@ -232,6 +241,199 @@ describe('AuthService', () => {
       ).rejects.toThrow(
         'Invalid email or password',
       );
+    });
+  });
+
+  describe('provisionUser', () => {
+    const provisionedUser = {
+      id: 2,
+      name: 'Recruiter User',
+      email: 'recruiter@example.com',
+      role: 'RECRUITER',
+      status: 'PENDING',
+    };
+
+    it.each(['RECRUITER', 'INTERVIEWER', 'MENTOR'])(
+      'sends an activation email for %s users without returning the token',
+      async (role) => {
+        (
+          db.orm.public.User.first as jest.Mock
+        ).mockResolvedValue(null);
+        (
+          bcrypt.hash as jest.Mock
+        ).mockResolvedValue('temporary-password-hash');
+        (
+          db.orm.public.User.create as jest.Mock
+        ).mockResolvedValue({
+          ...provisionedUser,
+          role,
+        });
+        emailService.sendActivationEmail.mockResolvedValue(undefined);
+
+        const result = await service.provisionUser({
+          name: provisionedUser.name,
+          email: provisionedUser.email,
+          role: role as 'RECRUITER' | 'INTERVIEWER' | 'MENTOR',
+        });
+
+        expect(result).toEqual({
+          user: {
+            id: provisionedUser.id,
+            name: provisionedUser.name,
+            email: provisionedUser.email,
+            role,
+            status: 'PENDING',
+          },
+          message:
+            'User provisioned successfully. An activation email has been sent.',
+        });
+        expect(emailService.sendActivationEmail).toHaveBeenCalledWith(
+          provisionedUser.email,
+          provisionedUser.name,
+          expect.stringMatching(
+            /^http:\/\/localhost:3000\/activate\/[a-f0-9]{64}$/,
+          ),
+        );
+        expect(JSON.stringify(result)).not.toContain('activationToken');
+        expect(JSON.stringify(result)).not.toContain('temporary-password-hash');
+      },
+    );
+
+    it('rolls back the pending user when email delivery fails', async () => {
+      (
+        db.orm.public.User.first as jest.Mock
+      ).mockResolvedValue(null);
+      (
+        bcrypt.hash as jest.Mock
+      ).mockResolvedValue('temporary-password-hash');
+      (
+        db.orm.public.User.create as jest.Mock
+      ).mockResolvedValue(provisionedUser);
+      emailService.sendActivationEmail.mockRejectedValue(
+        new Error('email delivery failed'),
+      );
+      const deleteMock = jest.fn().mockResolvedValue({});
+      (
+        db.orm.public.User.where as jest.Mock
+      ).mockReturnValue({ delete: deleteMock });
+
+      await expect(
+        service.provisionUser({
+          name: provisionedUser.name,
+          email: provisionedUser.email,
+          role: 'RECRUITER',
+        }),
+      ).rejects.toThrow('email delivery failed');
+
+      expect(deleteMock).toHaveBeenCalledWith();
+    });
+
+    it('rejects provisioning when the frontend URL is missing and rolls back', async () => {
+      delete process.env['FRONTEND_URL'];
+      (
+        db.orm.public.User.first as jest.Mock
+      ).mockResolvedValue(null);
+      (
+        bcrypt.hash as jest.Mock
+      ).mockResolvedValue('temporary-password-hash');
+      (
+        db.orm.public.User.create as jest.Mock
+      ).mockResolvedValue(provisionedUser);
+      const deleteMock = jest.fn().mockResolvedValue({});
+      (
+        db.orm.public.User.where as jest.Mock
+      ).mockReturnValue({ delete: deleteMock });
+
+      await expect(
+        service.provisionUser({
+          name: provisionedUser.name,
+          email: provisionedUser.email,
+          role: 'RECRUITER',
+        }),
+      ).rejects.toThrow('Email delivery is not configured');
+
+      expect(emailService.sendActivationEmail).not.toHaveBeenCalled();
+      expect(deleteMock).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('activate', () => {
+    const activationToken = 'activation-token';
+    const user = {
+      id: 2,
+      email: 'recruiter@example.com',
+      activationTokenHash: createHash('sha256')
+        .update(activationToken)
+        .digest('hex'),
+      activationExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+    };
+
+    it('activates a pending user and clears the one-time token', async () => {
+      (
+        db.orm.public.User.all as jest.Mock
+      ).mockResolvedValue([user]);
+      (
+        bcrypt.hash as jest.Mock
+      ).mockResolvedValue('secure-password-hash');
+      const updateMock = jest.fn().mockResolvedValue({});
+      (
+        db.orm.public.User.where as jest.Mock
+      ).mockReturnValue({ update: updateMock });
+
+      await expect(
+        service.activate({
+          token: activationToken,
+          password: 'UserPassword123!',
+        }),
+      ).resolves.toEqual({ message: 'Account activated successfully' });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(
+        'UserPassword123!',
+        10,
+      );
+      expect(updateMock).toHaveBeenCalledWith({
+        password: 'secure-password-hash',
+        status: 'ACTIVE',
+        activationTokenHash: null,
+        activationExpiresAt: null,
+      });
+    });
+
+    it('rejects expired activation tokens', async () => {
+      (
+        db.orm.public.User.all as jest.Mock
+      ).mockResolvedValue([
+        {
+          ...user,
+          activationExpiresAt: new Date(Date.now() - 1).toISOString(),
+        },
+      ]);
+
+      await expect(
+        service.activate({
+          token: activationToken,
+          password: 'UserPassword123!',
+        }),
+      ).rejects.toThrow('Activation token is invalid or expired');
+    });
+
+    it('rejects a token after it has been cleared by activation', async () => {
+      (
+        db.orm.public.User.all as jest.Mock
+      ).mockResolvedValue([
+        {
+          ...user,
+          activationTokenHash: null,
+          activationExpiresAt: null,
+        },
+      ]);
+
+      await expect(
+        service.activate({
+          token: activationToken,
+          password: 'UserPassword123!',
+        }),
+      ).rejects.toThrow('Activation token is invalid or expired');
     });
   });
 
