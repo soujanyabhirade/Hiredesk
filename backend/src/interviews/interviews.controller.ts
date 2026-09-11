@@ -1,8 +1,24 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+
 import { RolesGuard } from '../auth/guards/roles.guard.js';
+
 import { Roles } from '../auth/decorators/roles.decorator.js';
+
 import { InterviewsService } from './interviews.service.js';
+import { CreateInterviewDto } from './dto/create-interview.dto.js';
+import { UpdateInterviewDto } from './dto/update-interview.dto.js';
 
 @Controller('interviews')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,13 +29,39 @@ export class InterviewsController {
   ) {}
 
   @Post()
-  create(@Body() interview: any) {
-    return this.interviewsService.create(interview);
+  create(@Body() interview: CreateInterviewDto) {
+    return this.interviewsService.create(
+      interview,
+    );
   }
 
   @Get()
-  findAll() {
-    return this.interviewsService.findAll();
+  findAll(
+    @Query('status') status?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.interviewsService.findAll(
+      status || '',
+      sort || 'newest',
+    );
+  }
+
+  @Put(':id')
+  update(
+    @Param('id') id: string,
+    @Body() interview: UpdateInterviewDto,
+  ) {
+    return this.interviewsService.update(
+      Number(id),
+      interview,
+    );
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.interviewsService.delete(
+      Number(id),
+    );
   }
 
   @Get('health')

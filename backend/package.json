@@ -11,10 +11,12 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "test": "jest",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:e2e": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --config ./test/jest-e2e.json",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "bootstrap:admin": "node --loader ts-node/esm scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

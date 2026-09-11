@@ -8,14 +8,108 @@ import { db } from '../prisma/db.js';
 
 @Injectable()
 export class JobsService {
-  async getJobs() {
-    return await db.orm.public.Job.all();
+  async getJobs(
+    page = 1,
+    limit = 5,
+    search = '',
+    status?: string,
+    sort = 'newest',
+  ) {
+    const safePage = Math.max(1, page);
+
+    const safeLimit = Math.min(
+      Math.max(1, limit),
+      50,
+    );
+
+    const searchTerm =
+      search.trim().toLowerCase();
+
+    const statusFilter =
+      status?.trim().toLowerCase() || '';
+
+    const allJobs =
+      await db.orm.public.Job.all();
+
+    const filteredJobs =
+      allJobs.filter((job) => {
+        const matchesSearch =
+          !searchTerm ||
+          job.title
+            .toLowerCase()
+            .includes(searchTerm) ||
+          job.description
+            ?.toLowerCase()
+            .includes(searchTerm) ||
+          job.location
+            ?.toLowerCase()
+            .includes(searchTerm);
+
+        const matchesStatus =
+          !statusFilter ||
+          job.status.toLowerCase() ===
+            statusFilter;
+
+        return (
+          Boolean(matchesSearch) &&
+          matchesStatus
+        );
+      });
+
+    const sortedJobs =
+      [...filteredJobs].sort(
+        (a, b) => {
+          switch (sort) {
+            case 'oldest':
+              return (
+                new Date(a.createdAt).getTime() -
+                new Date(b.createdAt).getTime()
+              );
+
+            case 'titleAsc':
+              return a.title.localeCompare(
+                b.title,
+              );
+
+            case 'titleDesc':
+              return b.title.localeCompare(
+                a.title,
+              );
+
+            case 'newest':
+            default:
+              return (
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+              );
+          }
+        },
+      );
+
+    const offset =
+      (safePage - 1) * safeLimit;
+
+    const jobs = sortedJobs.slice(
+      offset,
+      offset + safeLimit,
+    );
+
+    return {
+      data: jobs,
+      page: safePage,
+      limit: safeLimit,
+      search: searchTerm,
+      status: statusFilter || null,
+      sort,
+      total: filteredJobs.length,
+    };
   }
 
   async getJobById(id: number) {
-    const job = await db.orm.public.Job.first({
-      id,
-    });
+    const job =
+      await db.orm.public.Job.first({
+        id,
+      });
 
     if (!job) {
       throw new NotFoundException(
@@ -35,9 +129,10 @@ export class JobsService {
       status?: string;
     },
   ) {
-    const job = await db.orm.public.Job.first({
-      id,
-    });
+    const job =
+      await db.orm.public.Job.first({
+        id,
+      });
 
     if (!job) {
       throw new NotFoundException(
@@ -64,9 +159,10 @@ export class JobsService {
   }
 
   async deleteJob(id: number) {
-    const job = await db.orm.public.Job.first({
-      id,
-    });
+    const job =
+      await db.orm.public.Job.first({
+        id,
+      });
 
     if (!job) {
       throw new NotFoundException(
@@ -77,9 +173,11 @@ export class JobsService {
     const candidates =
       await db.orm.public.Candidate.all();
 
-    const hasCandidates = candidates.some(
-      (candidate) => candidate.jobId === id,
-    );
+    const hasCandidates =
+      candidates.some(
+        (candidate) =>
+          candidate.jobId === id,
+      );
 
     if (hasCandidates) {
       throw new ConflictException(
@@ -110,8 +208,10 @@ export class JobsService {
   }) {
     return await db.orm.public.Job.create({
       title: data.title,
-      description: data.description ?? null,
-      location: data.location ?? null,
+      description:
+        data.description ?? null,
+      location:
+        data.location ?? null,
     });
   }
 }

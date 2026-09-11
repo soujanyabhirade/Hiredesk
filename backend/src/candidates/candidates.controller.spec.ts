@@ -12,12 +12,13 @@ jest.mock('../prisma/db.js', () => ({
     },
   },
 }));
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 
 import { CandidatesController } from './candidates.controller.js';
 import { CandidatesService } from './candidates.service.js';
+
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
 
 describe('CandidatesController', () => {
   let controller: CandidatesController;
@@ -42,15 +43,17 @@ describe('CandidatesController', () => {
             provide: CandidatesService,
             useValue: mockCandidatesService,
           },
-          {
-            provide: JwtService,
-            useValue: {
-              verifyAsync: jest.fn(),
-              signAsync: jest.fn(),
-            },
-          },
         ],
-      }).compile();
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .overrideGuard(RolesGuard)
+        .useValue({
+          canActivate: jest.fn().mockReturnValue(true),
+        })
+        .compile();
 
     controller =
       module.get<CandidatesController>(

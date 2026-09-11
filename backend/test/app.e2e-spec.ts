@@ -197,7 +197,17 @@ describe('AppController (e2e)', () => {
       )
       .expect(200)
       .expect((response) => {
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body).toHaveProperty('data');
+        expect(
+          Array.isArray(response.body.data),
+        ).toBe(true);
+
+        expect(response.body).toHaveProperty('page');
+        expect(response.body).toHaveProperty('limit');
+        expect(response.body).toHaveProperty('search');
+        expect(response.body).toHaveProperty('jobId');
+        expect(response.body).toHaveProperty('sort');
+        expect(response.body).toHaveProperty('total');
       });
   });
 
@@ -289,6 +299,208 @@ describe('AppController (e2e)', () => {
         jobId: 1,
       })
       .expect(201);
+  });
+
+  it('/candidates (PUT) with MENTOR role', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Candidate PUT Mentor Test',
+        email: `candidate-put-mentor-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-candidate-put-mentor-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'MENTOR',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .put(`/candidates/${candidate.id}`)
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        name: 'Updated by Mentor',
+      })
+      .expect(403);
+  });
+
+  it('/candidates (PUT) with RECRUITER role', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Candidate PUT Recruiter Test',
+        email: `candidate-put-recruiter-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-candidate-put-recruiter-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'RECRUITER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .put(`/candidates/${candidate.id}`)
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .send({
+        name: 'Updated by Recruiter',
+      })
+      .expect(200)
+      .expect((response) => {
+        expect(response.body).toBeDefined();
+      });
+  });
+
+  it('/candidates (DELETE) with MENTOR role', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Candidate DELETE Mentor Test',
+        email: `candidate-delete-mentor-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-candidate-delete-mentor-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'MENTOR',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .delete(`/candidates/${candidate.id}`)
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .expect(403);
+  });
+
+  it('/candidates (DELETE) with RECRUITER role', async () => {
+    const candidate =
+      await db.orm.public.Candidate.create({
+        name: 'Candidate DELETE Recruiter Test',
+        email: `candidate-delete-recruiter-${Date.now()}@example.com`,
+        jobId: 1,
+      });
+
+    const email =
+      `e2e-candidate-delete-recruiter-${Date.now()}@example.com`;
+
+    const password = 'TestPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email,
+        password,
+      })
+      .expect(201);
+
+    await db.orm.public.User
+      .where({
+        email,
+      })
+      .update({
+        role: 'RECRUITER',
+      });
+
+    const loginResponse =
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email,
+          password,
+        })
+        .expect(201);
+
+    return request(app.getHttpServer())
+      .delete(`/candidates/${candidate.id}`)
+      .set(
+        'Authorization',
+        `Bearer ${loginResponse.body.access_token}`,
+      )
+      .expect(200)
+      .expect((response) => {
+        expect(response.body.message).toContain(
+          'deleted successfully',
+        );
+      });
   });
 
   it('/interviews (GET) without authentication', async () => {
@@ -539,7 +751,7 @@ describe('AppController (e2e)', () => {
           email,
           password,
         })
-        .expect(201);
+      .expect(201);
 
     return request(app.getHttpServer())
       .get('/feedback/health')
@@ -604,7 +816,7 @@ describe('AppController (e2e)', () => {
           email,
           password,
         })
-        .expect(201);
+      .expect(201);
 
     return request(app.getHttpServer())
       .post('/feedback')
@@ -680,7 +892,7 @@ describe('AppController (e2e)', () => {
           email,
           password,
         })
-        .expect(201);
+      .expect(201);
 
     return request(app.getHttpServer())
       .post('/feedback')
@@ -724,7 +936,7 @@ describe('AppController (e2e)', () => {
           email,
           password,
         })
-        .expect(201);
+      .expect(201);
 
     const oldRefreshToken =
       loginResponse.body.refresh_token;
@@ -737,7 +949,7 @@ describe('AppController (e2e)', () => {
         .send({
           refresh_token: oldRefreshToken,
         })
-        .expect(201);
+      .expect(201);
 
     const newRefreshToken =
       refreshResponse.body.refresh_token;
@@ -795,7 +1007,17 @@ describe('AppController (e2e)', () => {
       .get('/jobs')
       .expect(200)
       .expect((response) => {
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(response.body).toHaveProperty('data');
+        expect(
+          Array.isArray(response.body.data),
+        ).toBe(true);
+
+        expect(response.body).toHaveProperty('page');
+        expect(response.body).toHaveProperty('limit');
+        expect(response.body).toHaveProperty('search');
+        expect(response.body).toHaveProperty('status');
+        expect(response.body).toHaveProperty('sort');
+        expect(response.body).toHaveProperty('total');
       });
   });
 
@@ -830,5 +1052,98 @@ describe('AppController (e2e)', () => {
           'Bangalore',
         );
       });
+  });
+
+  async function createAdmin() {
+    const email = `e2e-admin-${Date.now()}-${Math.random()}@example.com`;
+    const password = 'AdminPassword123!';
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email, password })
+      .expect(201);
+
+    await db.orm.public.User.where({ email }).update({
+      role: 'ADMIN',
+      status: 'ACTIVE',
+    });
+
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password })
+      .expect(201);
+
+    return { email, id: (await db.orm.public.User.first({ email }))!.id, token: login.body.access_token };
+  }
+
+  it('/users (POST) provisions and activates users with assigned roles', async () => {
+    const admin = await createAdmin();
+
+    for (const role of ['RECRUITER', 'INTERVIEWER', 'MENTOR', 'ADMIN']) {
+      const email = `e2e-provision-${role}-${Date.now()}-${Math.random()}@example.com`;
+      const response = await request(app.getHttpServer())
+        .post('/users')
+        .set('Authorization', `Bearer ${admin.token}`)
+        .send({ name: `${role} User`, email, role })
+        .expect(201);
+
+      expect(response.body.user.role).toBe(role);
+      expect(response.body.user.status).toBe('PENDING');
+      expect(response.body.activationToken).toBeDefined();
+
+      await request(app.getHttpServer())
+        .post('/auth/activate')
+        .send({ token: response.body.activationToken, password: 'UserPassword123!' })
+        .expect(201);
+
+      const login = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ email, password: 'UserPassword123!' })
+        .expect(201);
+      const payload = JSON.parse(Buffer.from(login.body.access_token.split('.')[1], 'base64url').toString());
+      expect(payload.role).toBe(role);
+    }
+  });
+
+  it('/users rejects non-admin provisioning and self updates', async () => {
+    const admin = await createAdmin();
+    const email = `e2e-mentor-${Date.now()}-${Math.random()}@example.com`;
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email, password: 'UserPassword123!' })
+      .expect(201);
+    const mentorLogin = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email, password: 'UserPassword123!' })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/users')
+      .set('Authorization', `Bearer ${mentorLogin.body.access_token}`)
+      .send({ name: 'Blocked', email: `blocked-${Date.now()}@example.com`, role: 'ADMIN' })
+      .expect(403);
+
+    await request(app.getHttpServer())
+      .put(`/users/${(await db.orm.public.User.first({ email }))!.id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ role: 'MENTOR' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .put(`/users/${admin.id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ role: 'ADMIN' })
+      .expect(403);
+  });
+
+  it('/users prevents disabling the last active admin', async () => {
+    const admin = await createAdmin();
+
+    await request(app.getHttpServer())
+      .put(`/users/${admin.id}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send({ status: 'DISABLED' })
+        .expect(403);
   });
 });

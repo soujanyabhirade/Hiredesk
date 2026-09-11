@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 
 import { CandidatesService } from './candidates.service.js';
 
@@ -12,6 +15,12 @@ jest.mock('../prisma/db.js', () => ({
           all: jest.fn(),
           first: jest.fn(),
           where: jest.fn(),
+        },
+        Job: {
+          first: jest.fn(),
+        },
+        Interview: {
+          all: jest.fn(),
         },
       },
     },
@@ -29,10 +38,16 @@ describe('CandidatesService', () => {
     email: 'test@example.com',
     phone: '9999999999',
     jobId: 1,
+    createdAt: '2026-09-04T10:00:00Z',
+    updatedAt: '2026-09-04T10:00:00Z',
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    (
+      db.orm.public.Job.first as jest.Mock
+    ).mockResolvedValue({ id: 1 });
 
     const module: TestingModule =
       await Test.createTestingModule({
@@ -75,7 +90,7 @@ describe('CandidatesService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all candidates', async () => {
+    it('should return paginated candidates', async () => {
       (
         db.orm.public.Candidate.all as jest.Mock
       ).mockResolvedValue([mockCandidate]);
@@ -86,15 +101,32 @@ describe('CandidatesService', () => {
         db.orm.public.Candidate.all,
       ).toHaveBeenCalled();
 
-      expect(result).toEqual([mockCandidate]);
+      expect(result).toEqual({
+        data: [mockCandidate],
+        page: 1,
+        limit: 5,
+        search: '',
+        jobId: null,
+        sort: 'newest',
+        total: 1,
+      });
     });
   });
 
   describe('findOne', () => {
-    it('should return one candidate', async () => {
+    it('should return one candidate with job details', async () => {
       (
         db.orm.public.Candidate.first as jest.Mock
       ).mockResolvedValue(mockCandidate);
+
+      (
+        db.orm.public.Job.first as jest.Mock
+      ).mockResolvedValue({
+        id: 1,
+        title: 'Backend Developer',
+        location: 'Remote',
+        status: 'OPEN',
+      });
 
       const result = await service.findOne(17);
 
@@ -104,7 +136,21 @@ describe('CandidatesService', () => {
         id: 17,
       });
 
-      expect(result).toEqual(mockCandidate);
+      expect(
+        db.orm.public.Job.first,
+      ).toHaveBeenCalledWith({
+        id: 1,
+      });
+
+      expect(result).toEqual({
+        ...mockCandidate,
+        job: {
+          id: 1,
+          title: 'Backend Developer',
+          location: 'Remote',
+          status: 'OPEN',
+        },
+      });
     });
 
     it('should throw NotFoundException when candidate does not exist', async () => {
@@ -175,10 +221,14 @@ describe('CandidatesService', () => {
   });
 
   describe('delete', () => {
-    it('should delete a candidate', async () => {
+    it('should delete a candidate without interviews', async () => {
       (
         db.orm.public.Candidate.first as jest.Mock
       ).mockResolvedValue(mockCandidate);
+
+      (
+        db.orm.public.Interview.all as jest.Mock
+      ).mockResolvedValue([]);
 
       const deleteMock = jest.fn().mockResolvedValue(undefined);
 
@@ -197,6 +247,10 @@ describe('CandidatesService', () => {
       });
 
       expect(
+        db.orm.public.Interview.all,
+      ).toHaveBeenCalled();
+
+      expect(
         db.orm.public.Candidate.where,
       ).toHaveBeenCalledWith({
         id: 17,
@@ -208,6 +262,31 @@ describe('CandidatesService', () => {
         message:
           'Candidate with id 17 deleted successfully',
       });
+    });
+
+    it('should prevent deleting a candidate with interviews', async () => {
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
+      (
+        db.orm.public.Interview.all as jest.Mock
+      ).mockResolvedValue([
+        {
+          id: 1,
+          candidateId: 17,
+          scheduledAt: '2026-09-10T10:00:00Z',
+          status: 'SCHEDULED',
+        },
+      ]);
+
+      await expect(
+        service.delete(17),
+      ).rejects.toThrow(ConflictException);
+
+      expect(
+        db.orm.public.Candidate.where,
+      ).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException when deleting a missing candidate', async () => {

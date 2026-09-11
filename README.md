@@ -1,223 +1,343 @@
 # HireDesk
 
-HireDesk is a hiring-pipeline application for recruiters.
+HireDesk is a recruitment-management application for managing candidates,
+jobs, interviews, feedback, dashboards, authentication, role-based access
+control, and administrator-controlled user onboarding.
 
-The project contains a NestJS backend, PostgreSQL database, Prisma ORM, JWT authentication, role-based authorization, and automated unit and E2E tests.
+The repository contains:
 
-## Architecture
+- A NestJS and TypeScript backend.
+- A Next.js 16, React 19, TypeScript, and Tailwind CSS frontend.
+- PostgreSQL with the Prisma Next ORM contract and checked-in migrations.
+- JWT authentication, bcrypt password hashing, refresh-token rotation, and
+  role-based authorization.
+- Jest/Supertest backend unit and E2E tests.
 
-```text
-User
-  ↓
-Next.js Frontend
-  ↓
-NestJS API
-  ↓
-Controllers
-  ↓
-Services / Business Logic
-  ↓
-Prisma ORM
-  ↓
-PostgreSQL Database
-```
+Docker and Docker Compose are not required for the current local setup.
 
-### Backend Flow
+## Current Project Status
 
-```text
-HTTP Request
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Prisma
-  ↓
-PostgreSQL
-  ↓
-Service
-  ↓
-Controller
-  ↓
-HTTP Response
-```
-
-### Main Backend Responsibilities
-
-- Controller: receives and handles HTTP requests
-- Service: contains application and business logic
-- Prisma: communicates with the PostgreSQL database
-- PostgreSQL: stores application data
-- Module: organizes related controllers and services
-- Guards: protect authenticated and role-based endpoints
-
-## Tech Stack
-
-### Backend
-
-- NestJS
-- TypeScript
-- Prisma ORM
-- PostgreSQL 17
-- JWT
-- bcrypt
-- Jest
-- Supertest
-
-### Frontend
-
-- Next.js
-- React
-- Tailwind CSS
-
-### Development Tools
-
-- Git
-- GitHub
-- Postman / Swagger
+| Area | Status | Notes |
+| --- | --- | --- |
+| Candidates CRUD | Implemented and locally verified | Search, filtering, sorting, pagination, detail, edit, and delete flows are present. |
+| Jobs | Implemented and locally verified | List, filtering, sorting, pagination, detail, update, and delete flows are present. |
+| Interviews | Implemented and locally verified | Scheduling form, filters, sorting, CRUD, and pagination are present. |
+| Feedback | Implemented and locally verified | Add, edit, delete, dropdowns, and pagination are present. |
+| Dashboard | Implemented and locally verified | Counts, recent candidates, and upcoming interviews are provided. |
+| JWT authentication | Implemented and locally verified | Register, login, protected routes, and JWT guards are present. |
+| Password hashing | Implemented and locally verified | Passwords use bcrypt and are never returned. |
+| Refresh tokens | Implemented and locally verified | Refresh-token rotation invalidates the previous token. |
+| RBAC | Implemented and locally verified | `ADMIN`, `RECRUITER`, `INTERVIEWER`, and `MENTOR` are supported. |
+| User onboarding | Implemented and locally verified | Admin provisioning, role assignment, activation tokens, and activation are present. |
+| Pagination | Implemented and locally verified | Users, Interviews, and Feedback use 10-item frontend pagination; Candidates and Jobs use API pagination. |
+| Frontend validation and messages | Implemented | Forms show validation, loading, success, and error states. |
+| HTTP-only cookies | Implemented and locally verified | Next.js API routes store access and refresh tokens in HTTP-only cookies. |
+| Google OAuth | Implemented but externally configured | Code is present; Google Cloud credentials and consent configuration are still required. |
+| GitHub Actions CI | Implemented but externally configured | Workflow is present; repository secrets must be added in GitHub. |
+| Vercel preparation | Implemented as documentation | Deployment is not completed. |
+| CraftedMeal onboarding | Pending | CraftedMeal source or access is not present in this workspace. |
+| Mentor demo and assessment | Pending human activity | Code cannot complete the presentation or feedback process. |
 
 ## Project Structure
 
 ```text
 HireDesk/
-│
 ├── backend/
 │   ├── src/
 │   │   ├── auth/
 │   │   ├── candidates/
-│   │   ├── interviews/
 │   │   ├── feedback/
+│   │   ├── interviews/
 │   │   ├── jobs/
 │   │   └── prisma/
-│   │
+│   ├── migrations/
+│   ├── scripts/
 │   └── test/
-│       └── app.e2e-spec.ts
-│
 ├── frontend/
-│
+│   ├── app/
+│   │   ├── api/
+│   │   ├── candidates/
+│   │   ├── dashboard/
+│   │   ├── feedback/
+│   │   ├── interviews/
+│   │   ├── jobs/
+│   │   ├── login/
+│   │   └── users/
+│   ├── lib/
+│   └── proxy.ts
+├── docs/
+├── .github/
+│   └── workflows/
 └── README.md
 ```
 
+- `backend/src`: NestJS controllers, services, DTOs, guards, and database client.
+- `backend/src/prisma`: Prisma Next contract and generated contract types.
+- `backend/migrations`: checked-in PostgreSQL schema migrations.
+- `backend/scripts/bootstrap-admin.ts`: creates or confirms the first admin.
+- `backend/test`: HTTP-level E2E tests.
+- `frontend/app`: App Router pages and Next.js API route handlers.
+- `frontend/app/api`: server-side proxy routes to the backend.
+- `frontend/lib/api-client.ts`: authenticated client requests and refresh retry.
+- `frontend/lib/backend.ts`: backend URL configuration.
+- `frontend/proxy.ts`: redirects unauthenticated users from protected pages.
+- `docs`: internship, OAuth, deployment, and project handoff documentation.
+- `.github/workflows/ci.yml`: lint, type-check, build, unit, coverage, and E2E CI.
+
 ## Prerequisites
 
-Before running the backend, install:
+Install:
 
-- Node.js
-- npm
-- PostgreSQL 17
-- Git
+- A current Node.js release compatible with the installed dependencies. The
+  repository does not pin a Node.js version in `package.json`; Node.js 22 was
+  used for the latest local verification.
+- npm.
+- PostgreSQL 15 or newer.
+- Git.
 
-The backend requires a PostgreSQL database.
+PostgreSQL 15 or newer is required by the Prisma Next project documentation.
+Docker/Docker Compose is not required for the current local setup.
 
-## Installation
+## Quick Start for Mentor
 
-Clone the repository:
+Follow this order for a fresh local setup:
+
+1. Clone the repository:
+
+   ```bash
+   git clone <YOUR_GITHUB_REPOSITORY_URL>
+   cd HireDesk
+   ```
+
+2. Install backend dependencies:
+
+   ```bash
+   cd backend
+   npm install
+   ```
+
+3. Configure `backend/.env` by copying `backend/.env.example` and setting a
+   PostgreSQL `DATABASE_URL`, a private `JWT_SECRET`, and local admin values:
+
+   PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   Bash:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Start or connect to PostgreSQL.
+5. Prepare the configured database from `backend`:
+
+   ```bash
+   npx prisma db init
+   npx prisma db migrate
+   ```
+
+6. Create or confirm the Admin account:
+
+   ```bash
+   npm run bootstrap:admin
+   ```
+
+7. Start the backend:
+
+   ```bash
+   npm run start:dev
+   ```
+
+8. In a second terminal, install frontend dependencies:
+
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+9. Start the frontend:
+
+   ```bash
+   npm run dev
+   ```
+
+10. Open `http://localhost:3000`.
+11. Log in at `/login` with the active Admin account configured for the
+    database in `backend/.env`.
+12. Follow the [manual testing checklist](#manual-mentor-test-checklist).
+
+The migration step must complete before normal backend use, Admin bootstrap, or
+backend E2E tests. The backend and bootstrap must use the same `DATABASE_URL`.
+
+## Clone the Repository
+
+Use the repository URL supplied by the project owner:
 
 ```bash
-git clone <your-github-repository-url>
+git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd HireDesk
 ```
 
-Install backend dependencies:
+## Backend Setup
+
+Open Terminal 1:
 
 ```bash
 cd backend
 npm install
 ```
 
-Install frontend dependencies:
+Create `backend/.env` by copying `backend/.env.example`.
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Bash:
 
 ```bash
-cd ../frontend
-npm install
+cp .env.example .env
 ```
 
-## Environment Variables
+Set `DATABASE_URL` to a PostgreSQL connection string and set a private
+`JWT_SECRET`. The backend listens on `PORT` when it is set; the application
+default is port `3000`. The current local frontend configuration expects the
+backend at `http://localhost:3001`, so use `PORT=3001` in local development if
+you want the checked-in frontend configuration to work unchanged.
 
-The backend uses environment variables for configuration.
-
-Create a `.env` file inside the `backend` directory.
-
-Example:
-
-```env
-DATABASE_URL="your-postgresql-connection-string"
-JWT_SECRET="your-jwt-secret"
-```
-
-Example format:
-
-```env
-DATABASE_URL="postgresql://USERNAME:PASSWORD@localhost:5432/hiredesk"
-JWT_SECRET="your-secret"
-```
-
-Do not commit `.env` files, passwords, database credentials, or JWT secrets to GitHub.
-
-## Database
-
-HireDesk uses PostgreSQL with Prisma ORM.
-
-The main entities are:
-
-```text
-Job
- ↓
-Candidate
- ↓
-Interview
- ↓
-Feedback
-```
-
-Authentication users are stored in the `User` table.
-
-The database connection is configured using:
-
-```text
-DATABASE_URL
-```
-
-The JWT signing secret is configured using:
-
-```text
-JWT_SECRET
-```
-
-### Database Contract
-
-The backend uses the Prisma database contract.
-
-The contract can be generated with:
+After completing [Database Setup](#database-setup), start the backend:
 
 ```bash
-cd backend
-npm run contract:emit
-```
-
-## Running the Application
-
-The project contains separate frontend and backend applications.
-
-### Backend
-
-Open a terminal:
-
-```bash
-cd backend
-npm install
 npm run start:dev
 ```
 
-The backend runs on:
+Backend URLs:
 
 ```text
-http://localhost:3001
+http://localhost:3001  # recommended local PORT configuration
+http://localhost:3000  # NestJS default when PORT is not set
 ```
 
-### Frontend
+## Backend Environment Variables
 
-Open another terminal:
+Create these in `backend/.env`:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/hiredesk"
+JWT_SECRET="replace-with-a-long-random-secret"
+```
+
+The admin bootstrap script also reads:
+
+```env
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="replace-with-a-strong-password"
+ADMIN_NAME="HireDesk Admin"
+```
+
+Google OAuth is optional and reads:
+
+```env
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_REDIRECT_URI="http://localhost:3000/api/auth/google/callback"
+```
+
+`PORT` is optional. The NestJS application defaults to `3000`; set
+`PORT=3001` for the recommended local frontend/backend arrangement.
+
+Never commit `.env`, database credentials, passwords, JWT secrets, OAuth
+client secrets, or tokens.
+
+## Database Setup
+
+1. Create or connect to a PostgreSQL 15+ database.
+2. Set `DATABASE_URL` in `backend/.env`.
+3. Install backend dependencies.
+4. From `backend`, initialize Prisma/database configuration when needed:
+
+   ```bash
+   npx prisma db init
+   ```
+
+5. Apply the required migrations/schema to the configured database:
+
+   ```bash
+   npx prisma db migrate
+   ```
+
+6. Optionally check the resulting migration status:
+
+   ```bash
+   npx prisma migration status
+   ```
+
+   `npx prisma migration status` only checks migration status; it does not
+   apply migrations. `npx prisma db init` initializes Prisma/database
+   configuration when needed. `npx prisma db migrate` applies the required
+   migrations/schema to the database configured by `DATABASE_URL`.
+
+   Do not delete or edit existing migrations. The database must be
+   initialized/migrated before starting normal backend use, running
+   `npm run bootstrap:admin`, or running backend E2E tests.
+
+7. If the contract is changed, regenerate the checked-in contract files:
+
+   ```bash
+   npm run contract:emit
+   ```
+
+The database contract is configured by `backend/prisma.config.ts` and loads
+`.env` through `dotenv/config`.
+
+## First Admin Account
+
+The first administrator is created from the backend bootstrap script, not by
+selecting a role on the login page.
+
+The required order is:
+
+```text
+Database migration
+        ↓
+Admin bootstrap
+        ↓
+Backend startup/use
+```
+
+In `backend/.env`, set example values:
+
+```env
+ADMIN_EMAIL="admin@example.com"
+ADMIN_PASSWORD="Use-a-private-demo-password"
+ADMIN_NAME="Demo Admin"
+```
+
+Then run:
+
+```bash
+cd backend
+npm run bootstrap:admin
+```
+
+Run the bootstrap from `backend` after database migration. It reads
+`DATABASE_URL` from `backend/.env`, so it must point to the same database used
+by the running backend.
+
+If the email does not exist, the script creates a bcrypt-hashed password and
+sets the user to `ADMIN` and `ACTIVE`. If the email already exists, it confirms
+the existing account and updates its name, role, and status; it does not reset
+the existing password. Therefore, `Admin account confirmed` does not mean that
+the supplied password was replaced.
+
+## Frontend Setup
+
+Open Terminal 2:
 
 ```bash
 cd frontend
@@ -225,647 +345,499 @@ npm install
 npm run dev
 ```
 
-The frontend runs on:
+The frontend is available at:
 
 ```text
 http://localhost:3000
 ```
 
-## Development Ports
+The frontend server-side API handlers read:
 
-```text
-Frontend
-http://localhost:3000
-
-Backend
-http://localhost:3001
+```env
+BACKEND_URL=http://localhost:3001
 ```
 
-The frontend communicates with the backend API:
+from `frontend/.env.local` or the process environment. Set it to the actual
+backend origin if the backend uses another port or host.
 
-```text
-Next.js :3000
-      ↓
-NestJS :3001
-      ↓
-PostgreSQL
-```
+## Running the Full Application
 
-## Authentication
-
-HireDesk uses JWT authentication.
-
-Passwords are hashed using bcrypt and are never returned in API responses.
-
-### Register
-
-**POST `/auth/register`**
-
-Request:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-Successful response:
-
-```json
-{
-  "id": 1,
-  "email": "user@example.com"
-}
-```
-
-The password is not included in the response.
-
-### Login
-
-**POST `/auth/login`**
-
-Request:
-
-```json
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-```
-
-Successful response:
-
-```json
-{
-  "access_token": "<JWT>",
-  "refresh_token": "<JWT>"
-}
-```
-
-The access token is used to access protected API endpoints.
-
-The refresh token is used to obtain a new access token.
-
-### Refresh Token
-
-**POST `/auth/refresh`**
-
-Request:
-
-```json
-{
-  "refresh_token": "<refresh-token>"
-}
-```
-
-Successful response:
-
-```json
-{
-  "access_token": "<new-access-token>",
-  "refresh_token": "<new-refresh-token>"
-}
-```
-
-HireDesk uses refresh-token rotation.
-
-After a successful refresh:
-
-1. A new refresh token is issued.
-2. The previous refresh token becomes invalid.
-3. The new refresh-token hash replaces the previous stored hash.
-
-Refresh tokens are stored using a SHA-256 digest followed by bcrypt hashing.
-
-## Authorization and RBAC
-
-HireDesk uses role-based access control.
-
-Supported roles include:
-
-- ADMIN
-- RECRUITER
-- INTERVIEWER
-- MENTOR
-
-Protected endpoints use:
-
-- `JwtAuthGuard` for authentication
-- `RolesGuard` for authorization
-- `@Roles()` to define allowed roles
-
-For example, candidate creation is restricted to:
-
-```text
-ADMIN
-RECRUITER
-```
-
-If an authenticated user does not have the required role, the API returns:
-
-```text
-403 Forbidden
-```
-
-## API Endpoints
-
-### Health
-
-**GET `/health`**
-
-Example response:
-
-```json
-{
-  "status": "ok",
-  "service": "HireDesk API"
-}
-```
-
-### Authentication
-
-**POST `/auth/register`**
-
-Registers a new user.
-
-**POST `/auth/login`**
-
-Authenticates a user and returns access and refresh tokens.
-
-**POST `/auth/refresh`**
-
-Refreshes the access token and rotates the refresh token.
-
-### Candidates
-
-**GET `/candidates`**
-
-Returns the list of candidates.
-
-Authentication is required.
-
-**POST `/candidates`**
-
-Creates a new candidate.
-
-Candidate creation requires:
-
-```text
-ADMIN
-RECRUITER
-```
-
-### Jobs
-
-**GET `/jobs`**
-
-Returns the list of jobs.
-
-**GET `/jobs/health`**
-
-Returns the jobs module health status.
-
-**POST `/jobs`**
-
-Creates a new job.
-
-### Interviews
-
-**GET `/interviews`**
-
-Returns interviews.
-
-The endpoint requires authentication and one of:
-
-```text
-ADMIN
-RECRUITER
-INTERVIEWER
-```
-
-**POST `/interviews`**
-
-Creates an interview.
-
-The endpoint requires authentication and one of:
-
-```text
-ADMIN
-RECRUITER
-INTERVIEWER
-```
-
-**GET `/interviews/health`**
-
-Returns the interviews module health status.
-
-### Feedback
-
-**GET `/feedback`**
-
-Returns feedback records.
-
-The endpoint requires:
-
-```text
-ADMIN
-INTERVIEWER
-```
-
-**POST `/feedback`**
-
-Creates feedback.
-
-The endpoint requires:
-
-```text
-ADMIN
-INTERVIEWER
-```
-
-**GET `/feedback/health`**
-
-Returns the feedback module health status.
-
-## Testing
-
-HireDesk uses Jest for backend testing.
-
-There are two main testing approaches:
-
-```text
-Unit Testing
-     ↓
-Test individual application logic
-```
-
-and:
-
-```text
-E2E Testing
-     ↓
-Test the application through HTTP
-```
-
-## Unit Tests
-
-Unit tests test individual pieces of application logic.
-
-Database dependencies such as Prisma can be mocked during unit testing.
-
-Run the unit tests:
+Terminal 1:
 
 ```bash
 cd backend
-npm test
+npm install
+npm run start:dev
 ```
 
-The unit tests cover application services and authentication logic.
-
-## E2E Tests
-
-E2E means end-to-end testing.
-
-E2E tests send HTTP requests to the NestJS application and verify the complete request flow.
-
-HireDesk uses:
-
-- Jest
-- Supertest
-- NestJS testing utilities
-- PostgreSQL
-
-The E2E test file is:
-
-```text
-backend/test/app.e2e-spec.ts
-```
-
-### Run E2E Tests
-
-From the `backend` directory:
+Terminal 2:
 
 ```bash
-npm test -- --config ./test/jest-e2e.json
+cd frontend
+npm install
+npm run dev
 ```
 
-Expected result:
+Open `http://localhost:3000`, visit `/login`, and log in with an active
+HireDesk user.
 
-```text
-Test Suites: 1 passed, 1 total
-Tests:       23 passed, 23 total
-```
+## Login and Authentication Flow
 
-## E2E Test Coverage
+There is no role selector on the login page. Login uses only email and
+password. The role comes from the existing `User` record and is included in
+the JWT payload for authorization.
 
-Run E2E tests with coverage:
+The normal flow is:
+
+1. The login page calls the Next.js `/api/auth/login` route.
+2. That route calls backend `POST /auth/login`.
+3. The backend verifies the bcrypt password and active status.
+4. The frontend stores access and refresh tokens in HTTP-only cookies.
+5. Protected frontend requests use Next.js API handlers.
+6. A `401` triggers one refresh attempt through `/api/auth/refresh`.
+7. If refresh fails, the client redirects to `/login`.
+8. Logout deletes both cookies.
+
+Authorization is based on the stored role, not the email address:
+
+| Role | Main access |
+| --- | --- |
+| `ADMIN` | User management and all protected recruitment features. |
+| `RECRUITER` | Candidate CRUD and interview/feedback features allowed by controllers. |
+| `INTERVIEWER` | Interview and feedback features. |
+| `MENTOR` | Candidate read access and candidate creation/update/delete restrictions as defined by controller roles. |
+
+The exact backend role guards are the source of truth. `JwtAuthGuard`
+authenticates tokens and `RolesGuard` enforces `@Roles()` declarations.
+
+## User Onboarding Workflow
+
+1. An admin logs in.
+2. The admin opens `/users`.
+3. The admin provisions a user.
+4. The admin assigns `ADMIN`, `RECRUITER`, `INTERVIEWER`, or `MENTOR`.
+5. The UI displays the one-time activation token.
+6. The invited user opens `/activate/<token>`.
+7. The invited user sets a password.
+8. The account becomes `ACTIVE`.
+9. The user logs in through `/login`.
+10. Backend guards use the assigned role.
+
+There is no email delivery service in this repository. The activation token is
+returned once to the administrator for local testing and must be handled
+securely. A new user does not choose an admin or recruiter role during login.
+
+## Main Frontend Routes
+
+| Route | Purpose |
+| --- | --- |
+| `/login` | Email/password login and optional Google login. |
+| `/` | Candidate list and management page. |
+| `/candidates/[id]` | Candidate detail. |
+| `/candidates/[id]/edit` | Candidate edit form. |
+| `/jobs` | Job list with filtering, sorting, and pagination. |
+| `/jobs/[id]` | Job detail/edit page. |
+| `/interviews` | Interview scheduling, filters, CRUD, and pagination. |
+| `/interviews/[id]` | Interview detail. |
+| `/feedback` | Feedback form, CRUD, dropdowns, and pagination. |
+| `/dashboard` | Dashboard counts and recent/upcoming data. |
+| `/users` | Admin-only user provisioning and management. |
+| `/activate/[token]` | Account activation and password setup. |
+
+## Main Backend API
+
+All paths below are relative to the backend origin.
+
+### Authentication
+
+| Method and path | Purpose | Auth |
+| --- | --- | --- |
+| `POST /auth/register` | Register a user. | Public |
+| `POST /auth/login` | Return access and refresh tokens. | Public |
+| `POST /auth/refresh` | Rotate the refresh token. | Refresh token |
+| `POST /auth/activate` | Activate an invited user. | Activation token |
+| `GET /auth/me` | Return the authenticated JWT subject. | JWT |
+| `GET /auth/google` | Return a Google authorization URL. | Public; OAuth config required |
+| `GET /auth/google/callback` | Exchange Google code and issue HireDesk tokens. | Public; OAuth config required |
+
+### Candidates
+
+| Method and path | Purpose | Auth/roles |
+| --- | --- | --- |
+| `GET /candidates` | List candidates with page, limit, search, job, and sort query parameters. | JWT |
+| `GET /candidates/:id` | Retrieve a candidate. | JWT |
+| `POST /candidates` | Create a candidate. | `ADMIN`, `RECRUITER` |
+| `PUT /candidates/:id` | Update a candidate. | `ADMIN`, `RECRUITER` |
+| `DELETE /candidates/:id` | Delete a candidate. | `ADMIN`, `RECRUITER` |
+| `GET /candidates/health` | Candidate module health. | JWT guard applies |
+
+### Jobs
+
+| Method and path | Purpose | Auth/roles |
+| --- | --- | --- |
+| `GET /jobs` | List jobs with page, limit, search, status, and sort query parameters. | Public backend endpoint |
+| `GET /jobs/:id` | Retrieve a job. | Public backend endpoint |
+| `POST /jobs` | Create a job. | Public backend endpoint |
+| `PUT /jobs/:id` | Update a job. | Public backend endpoint |
+| `DELETE /jobs/:id` | Delete a job. | Public backend endpoint |
+| `GET /jobs/health` | Jobs module health. | Public backend endpoint |
+
+### Interviews
+
+| Method and path | Purpose | Auth/roles |
+| --- | --- | --- |
+| `GET /interviews` | List interviews with status and sort query parameters. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `POST /interviews` | Schedule an interview. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `PUT /interviews/:id` | Update an interview. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `DELETE /interviews/:id` | Delete an interview. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `GET /interviews/health` | Interviews module health. | Same controller guard |
+
+### Feedback
+
+| Method and path | Purpose | Auth/roles |
+| --- | --- | --- |
+| `GET /feedback` | List feedback. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `POST /feedback` | Create feedback. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `GET /feedback/:id` | Retrieve feedback. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `PUT /feedback/:id` | Update feedback. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `DELETE /feedback/:id` | Delete feedback. | `ADMIN`, `RECRUITER`, `INTERVIEWER` |
+| `GET /feedback/health` | Feedback module health. | Same controller guard |
+
+### Dashboard and users
+
+| Method and path | Purpose | Auth/roles |
+| --- | --- | --- |
+| `GET /health` | Backend health. | Public |
+| `GET /dashboard` | Counts, recent candidates, and upcoming interviews. | JWT |
+| `GET /users` | List users without password/token fields. | `ADMIN` |
+| `POST /users` | Provision a pending user and return activation token. | `ADMIN` |
+| `PUT /users/:id` | Change another user's role or status. | `ADMIN` |
+
+## Testing
+
+Run these commands from the indicated directory.
+
+Backend unit tests:
 
 ```bash
-npm test -- --config ./test/jest-e2e.json --coverage
+cd backend
+npm test -- --runInBand
 ```
 
-The current E2E coverage result is:
-
-```text
-Statements: 92.22%
-Branches:   72.83%
-Functions:  89.13%
-Lines:      91.25%
-```
-
-The E2E suite currently contains:
-
-```text
-23 passing tests
-```
-
-### Core E2E Areas
-
-The E2E tests cover:
-
-- Application health
-- User registration
-- User login
-- Invalid login password
-- Refresh tokens
-- Refresh-token rotation
-- Authentication protection
-- Role-based authorization
-- Candidates
-- Interviews
-- Feedback
-- Jobs
-
-### Interview Tests
-
-The interview tests cover:
-
-- GET interviews without authentication
-- GET interviews with an interviewer role
-- POST interview with a status
-- POST interview without a status
-
-The two POST tests also verify the different `status` paths in the interview service.
-
-### Feedback Tests
-
-The feedback tests cover:
-
-- GET feedback without authentication
-- GET feedback with interviewer role
-- GET feedback health
-- POST feedback with comments
-- POST feedback without comments
-
-The two POST tests verify both paths for optional feedback comments.
-
-### Refresh Token Rotation Test
-
-The refresh-token rotation E2E test verifies:
-
-```text
-Login
-  ↓
-Old refresh token
-  ↓
-POST /auth/refresh
-  ↓
-New refresh token
-  ↓
-Old refresh token becomes invalid
-```
-
-The test verifies that:
-
-- A new refresh token is created.
-- The new token is different from the old token.
-- The stored hash matches the new token.
-- The old token no longer matches.
-- Reusing the old token returns `401 Unauthorized`.
-
-## Authentication Flow
-
-### Register
-
-```text
-Register
-   ↓
-Password hashed with bcrypt
-   ↓
-User stored in PostgreSQL
-```
-
-### Login
-
-```text
-Login
-  ↓
-Find user
-  ↓
-Compare password
-  ↓
-Create access token
-  ↓
-Create refresh token
-  ↓
-Hash refresh token
-  ↓
-Store refresh-token hash
-  ↓
-Return tokens
-```
-
-### Refresh
-
-```text
-Refresh token
-  ↓
-Verify token
-  ↓
-Find user
-  ↓
-Verify stored token hash
-  ↓
-Create new access token
-  ↓
-Create new refresh token
-  ↓
-Replace stored refresh-token hash
-  ↓
-Return new tokens
-```
-
-The old refresh token cannot be reused after successful rotation.
-
-## Protected API Flow
-
-A request to a protected endpoint follows this flow:
-
-```text
-Client
-  ↓
-Authorization: Bearer <access-token>
-  ↓
-JwtAuthGuard
-  ↓
-Verify JWT
-  ↓
-Attach user information
-  ↓
-RolesGuard
-  ↓
-Check user role
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Database
-```
-
-If the JWT is missing or invalid:
-
-```text
-401 Unauthorized
-```
-
-If the JWT is valid but the user does not have the required role:
-
-```text
-403 Forbidden
-```
-
-## Testing Approach
-
-### Unit Testing
-
-Unit tests focus on individual pieces of application logic.
-
-Dependencies such as Prisma can be mocked.
-
-```text
-Service
-  ↓
-Mock dependency
-  ↓
-Expected result
-```
-
-### E2E Testing
-
-E2E tests verify the application through HTTP.
-
-```text
-Supertest
-  ↓
-HTTP Request
-  ↓
-NestJS Controller
-  ↓
-Service
-  ↓
-Prisma
-  ↓
-PostgreSQL
-  ↓
-HTTP Response
-```
-
-### Why Both?
-
-Unit tests help verify application logic in isolation.
-
-E2E tests help verify that the complete application flow works correctly.
-
-Both provide different types of confidence.
-
-## Git Workflow
-
-The project uses Git and GitHub for source control.
-
-Check the current status:
+Backend unit tests with coverage gate:
 
 ```bash
-git status
+npm run test:cov -- --runInBand
 ```
 
-Review changes:
+Backend E2E tests:
 
 ```bash
-git diff
+cd backend
+npm run test:e2e -- --runInBand
 ```
 
-Stage changes:
+Before running backend E2E tests, ensure PostgreSQL is running and reachable,
+`DATABASE_URL` is valid, the required schema/migrations have been applied to
+that database, and the required backend environment variables are configured.
+The current tests do not require separate invented seed data; they use the
+configured application database and their existing test setup.
+
+Frontend lint:
 
 ```bash
-git add .
+cd frontend
+npm run lint
 ```
 
-Commit changes:
+Frontend TypeScript diagnostics:
 
 ```bash
-git commit -m "Describe the change"
+npx tsc --noEmit
 ```
 
-Push changes:
+Frontend production build:
 
 ```bash
-git push origin main
+npm run build
 ```
 
-Run relevant tests before committing changes.
+The latest local verification for this repository was:
+
+- Backend unit tests: **121 passing** across 13 suites.
+- Backend E2E tests: **30 passing**.
+- Backend coverage: **68.21% statements, 65.33% branches, 71.15% functions, 68.39% lines**, passing the configured gate.
+- Frontend lint: **passed**.
+- Frontend TypeScript check: **passed**.
+- Frontend production build: **passed**.
+- `git diff --check`: **passed**.
+
+The E2E runner prints an existing Jest open-handle warning after the tests
+finish, but all 30 tests pass.
+
+## Manual Mentor Test Checklist
+
+### Authentication
+
+- [ ] Create or confirm a demo admin with `npm run bootstrap:admin`.
+- [ ] Start backend and frontend.
+- [ ] Log in at `/login`.
+- [ ] Open `/dashboard`.
+- [ ] Log out.
+- [ ] Try an invalid password and confirm it is rejected.
+- [ ] Open a protected route while logged out and confirm redirect to `/login`.
+
+### User onboarding
+
+- [ ] Open `/users` as an admin.
+- [ ] Provision a `RECRUITER`.
+- [ ] Verify the new account is `PENDING`.
+- [ ] Copy the displayed activation token securely.
+- [ ] Open `/activate/<token>` and set a password.
+- [ ] Log in as the activated recruiter.
+- [ ] Verify recruiter access to permitted recruitment features.
+- [ ] Verify a non-admin cannot use `/users`.
+
+### Candidates
+
+- [ ] Create a candidate.
+- [ ] Search or filter candidates.
+- [ ] Open candidate details.
+- [ ] Edit the candidate.
+- [ ] Delete the candidate if appropriate.
+
+### Jobs
+
+- [ ] View jobs.
+- [ ] Test filtering, sorting, and pagination.
+- [ ] Open and edit a job.
+
+### Interviews
+
+- [ ] Schedule an interview.
+- [ ] Test status filtering and sorting.
+- [ ] Edit and delete an interview.
+- [ ] Test pagination.
+- [ ] Confirm dropdown selected text and options are readable.
+
+### Feedback
+
+- [ ] Add feedback.
+- [ ] Edit feedback.
+- [ ] Delete feedback.
+- [ ] Test pagination.
+- [ ] Confirm interview and rating dropdowns are readable.
+
+### Dashboard
+
+- [ ] Verify candidate, job, interview, and feedback counts.
+- [ ] Verify recent candidates.
+- [ ] Verify upcoming scheduled interviews.
+
+## Pagination
+
+Current pagination:
+
+- Users: frontend pagination, 10 users per page.
+- Interviews: frontend pagination, 10 interviews per page.
+- Feedback: frontend pagination, 10 feedback records per page.
+- Candidates: backend/API pagination, default limit 5.
+- Jobs: backend/API pagination, default limit 5.
+
+Each paginated frontend list has a page indicator and Previous/Next buttons.
+
+## Google OAuth
+
+Google OAuth code/scaffolding is implemented but **requires external Google
+Cloud configuration before testing**.
+
+Backend variables:
+
+```env
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
+GOOGLE_REDIRECT_URI="http://localhost:3000/api/auth/google/callback"
+```
+
+Setup:
+
+1. Create or select a Google Cloud project.
+2. Configure the OAuth consent screen.
+3. Create a Web OAuth client.
+4. Add the exact redirect URI above.
+5. Put the client ID and secret in `backend/.env`.
+6. Ensure the Google email already belongs to an active HireDesk user.
+
+Do not commit the client secret. OAuth does not silently create users or assign
+roles. Production requires a production callback URL and production secrets.
+
+## GitHub Actions / CI
+
+`.github/workflows/ci.yml` runs on pushes to `main` and pull requests. It:
+
+- Installs backend and frontend dependencies with `npm ci`.
+- Runs frontend lint.
+- Runs frontend TypeScript diagnostics.
+- Builds the frontend.
+- Runs backend unit tests with coverage.
+- Runs backend E2E tests.
+
+Configure these GitHub repository secrets for the E2E job:
+
+```text
+DATABASE_URL
+JWT_SECRET
+```
+
+The current workflow does not provision PostgreSQL and does not automatically
+create or apply a database schema. Therefore, the configured CI
+`DATABASE_URL` must point to a reachable, usable database with the required
+schema/migrations already applied. The workflow itself is unchanged by this
+documentation.
+
+Docker build and Docker Compose steps are intentionally not included.
+
+## Deployment / Vercel
+
+Deployment preparation is complete; production deployment is not completed.
+
+Vercel is for the Next.js frontend only. The NestJS backend needs separate
+hosting, and PostgreSQL needs a reachable database service.
+
+Recommended frontend deployment:
+
+1. Create a Vercel project using the repository.
+2. Set the project root to `frontend`.
+3. Set `BACKEND_URL` to the deployed HTTPS backend origin.
+4. Deploy the frontend.
+5. Host the backend separately and configure it with `DATABASE_URL`,
+   `JWT_SECRET`, and optional Google OAuth variables.
+6. Provide a reachable production PostgreSQL service and ensure the backend's
+   `DATABASE_URL` points to it.
+7. Update `GOOGLE_REDIRECT_URI` if Google OAuth is used.
+
+Production environment variables must point to the correct deployed backend
+and database services. No production deployment or account setup has been
+performed.
+
+Production smoke test:
+
+- Login and invalid-login rejection.
+- Protected route redirect.
+- Refresh and logout.
+- Candidate, interview, and feedback CRUD.
+- User onboarding and role restrictions.
+- Backend health endpoint.
+- Rejected unauthenticated API request.
+
+## Troubleshooting
+
+### Port already in use
+
+Set a different `PORT` for the backend and update frontend `BACKEND_URL`, or
+stop the process using the configured port.
+
+### Frontend cannot reach backend
+
+Confirm the backend is running, confirm its port, and ensure
+`frontend/.env.local` contains the matching `BACKEND_URL`. Restart the
+frontend after changing environment variables.
+
+### Invalid email or password
+
+Confirm the email exists, the account is `ACTIVE`, and the password matches.
+The bootstrap message `Admin account confirmed` can refer to an existing
+account and does not necessarily mean its password was reset.
+
+### Database connection failure
+
+Confirm PostgreSQL is running, `DATABASE_URL` is valid, and the database user
+has access to the named database.
+
+### Migration or contract problems
+
+Run `npx prisma migration status` from `backend`. Do not delete migrations.
+If the contract was intentionally changed, run `npm run contract:emit`.
+
+### Missing environment variables
+
+Copy `.env.example` to `.env`, fill placeholders, and restart the relevant
+process. Never paste secrets into source files or README.md.
+
+### Admin bootstrap problems
+
+Run the command from `backend` and confirm `DATABASE_URL` points to the same
+database used by the running backend. Existing accounts may need their
+password reset through an approved account-management process; rerunning the
+current bootstrap command does not reset an existing password.
+
+### OAuth configuration problems
+
+Confirm the three Google variables, the exact redirect URI, the OAuth consent
+screen, allowed test users, and that the Google email belongs to an active
+HireDesk user.
 
 ## Security Notes
 
-- Passwords are never returned by the API.
-- Passwords are hashed using bcrypt.
-- Refresh tokens are not stored as plain text.
-- Refresh tokens are stored using a SHA-256 digest followed by bcrypt hashing.
-- JWT-protected endpoints require a valid access token.
-- Role-protected endpoints require the correct user role.
-- Secrets should be stored in environment variables.
-- `.env` files should not be committed to Git.
-- Database credentials should not be committed to GitHub.
+- Do not commit `.env` files.
+- Do not commit database credentials, JWT secrets, Google OAuth secrets,
+  passwords, or tokens.
+- Passwords are hashed with bcrypt.
+- Refresh-token digests are hashed before storage.
+- HTTP-only cookies are used for frontend token storage.
+- Activation tokens are one-time and expiring; handle them securely.
+- Production secrets must be provided through environment variables.
+- Do not use email address as a substitute for role authorization.
 
-## Current Backend Features
+## Demo Flow
 
-The backend currently includes:
+Suggested 10-minute demo:
 
-- JWT authentication
-- User registration
-- User login
-- bcrypt password hashing
-- Refresh-token rotation
-- JWT authentication guard
-- Role-based authorization
-- Candidates module
-- Interviews module
-- Feedback module
-- Jobs module
-- Prisma ORM
-- PostgreSQL database
-- Jest unit tests
-- Jest + Supertest E2E tests
-- E2E coverage testing
+1. Log in as admin.
+2. Show the dashboard.
+3. Open User Management.
+4. Provision a recruiter.
+5. Explain assigned role and pending status.
+6. Activate the recruiter account.
+7. Log in as recruiter.
+8. Show role-based access restrictions.
+9. Demonstrate Candidates, Interviews, and Feedback.
+10. Demonstrate pagination and readable dropdowns.
+11. Show test and CI commands.
+12. Briefly explain the frontend/API/backend/database architecture.
 
-## Project Status
+The actual demo and mentor feedback remain human activities.
 
-The HireDesk backend currently has:
+## Known Limitations and Pending Items
 
-- Authentication
-- JWT access tokens
-- Refresh tokens
-- Refresh-token rotation
-- Role-based authorization
-- PostgreSQL database integration
-- Prisma ORM
-- Candidates module
-- Interviews module
-- Feedback module
-- Jobs module
-- Unit tests
-- 23 passing E2E tests
-- E2E coverage above 80% for statements, lines, and functions
+- Google OAuth requires Google Cloud configuration and real environment
+  variables.
+- GitHub Actions requires repository secrets.
+- Vercel deployment has not been performed.
+- CraftedMeal is not present or accessible in this workspace, so no API
+  contract has been invented.
+- A mentor/customer must assign the first real feature.
+- Demo presentation, mentor feedback, and assessment are not code-completable.
+- Docker/Docker Compose is intentionally skipped.
+- Pull-request and peer-review activities are intentionally skipped.
 
-Frontend development is being developed separately using Next.js.
+## Development Guidelines
+
+For a new collaborator:
+
+1. Create a working branch when appropriate.
+2. Install backend and frontend dependencies.
+3. Configure local environment files.
+4. Run the backend and frontend locally.
+5. Run the targeted tests before and after changes.
+6. Run the complete lint, type-check, build, unit, E2E, and diff checks before
+   submitting work.
+7. Keep secrets out of source control.
+
+## Additional Documentation
+
+- [Internship plan audit and deployment guide](docs/INTERNSHIP_PLAN.md)
+- [Backend README](backend/README.md)
+- [Prisma Next project notes](backend/prisma-next.md)
+- [Database ERD](backend/docs/ERD.md)
+- [GitHub Actions workflow](.github/workflows/ci.yml)

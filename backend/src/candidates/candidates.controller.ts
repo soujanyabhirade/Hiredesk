@@ -6,11 +6,14 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
 import { CandidatesService } from './candidates.service.js';
+
 import { CreateCandidateDto } from './dto/create-candidate.dto.js';
+import { UpdateCandidateDto } from './dto/update-candidate.dto.js';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -35,8 +38,22 @@ export class CandidatesController {
   }
 
   @Get()
-  findAll() {
-    return this.candidatesService.findAll();
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('jobId') jobId?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.candidatesService.findAll(
+      Number(page) || 1,
+      Number(limit) || 5,
+      search || '',
+      jobId
+        ? Number(jobId)
+        : undefined,
+      sort || 'newest',
+    );
   }
 
   @Get('health')
@@ -58,16 +75,11 @@ export class CandidatesController {
   update(
     @Param('id') id: string,
     @Body()
-    body: {
-      name?: string;
-      email?: string;
-      phone?: string;
-      jobId?: number;
-    },
+    updateCandidateDto: UpdateCandidateDto,
   ) {
     return this.candidatesService.update(
       Number(id),
-      body,
+      updateCandidateDto,
     );
   }
 

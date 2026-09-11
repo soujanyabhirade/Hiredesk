@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { JwtService } from '@nestjs/jwt';
 
 // Mock the AuthService module so Jest does NOT load the real service.
 // This prevents Prisma / @prisma/orm-postgres from being loaded.
@@ -14,6 +16,8 @@ describe('AuthController', () => {
   const authService = {
     register: jest.fn(),
     login: jest.fn(),
+    getGoogleAuthorizationUrl: jest.fn(),
+    loginWithGoogle: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -25,6 +29,14 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: authService,
+        },
+        {
+          provide: JwtAuthGuard,
+          useValue: { canActivate: jest.fn().mockReturnValue(true) },
+        },
+        {
+          provide: JwtService,
+          useValue: { verifyAsync: jest.fn() },
         },
       ],
     }).compile();
@@ -74,5 +86,36 @@ describe('AuthController', () => {
     });
 
     expect(authService.login).toHaveBeenCalledWith(dto);
+  });
+
+  it('should return the Google authorization URL', () => {
+    authService.getGoogleAuthorizationUrl.mockReturnValue(
+      'https://accounts.google.com/oauth',
+    );
+
+    expect(controller.google()).toEqual({
+      authorization_url: 'https://accounts.google.com/oauth',
+    });
+  });
+
+  it('should exchange a Google callback for application tokens', async () => {
+    authService.loginWithGoogle.mockResolvedValue({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
+    });
+
+    const result = await controller.googleCallback(
+      'authorization-code',
+      'signed-state',
+    );
+
+    expect(result).toEqual({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
+    });
+    expect(authService.loginWithGoogle).toHaveBeenCalledWith(
+      'authorization-code',
+      'signed-state',
+    );
   });
 });

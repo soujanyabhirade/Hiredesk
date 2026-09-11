@@ -6,9 +6,12 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 
 import { JobsService } from './jobs.service.js';
+import { CreateJobDto } from './dto/create-job.dto.js';
+import { UpdateJobDto } from './dto/update-job.dto.js';
 
 @Controller('jobs')
 export class JobsController {
@@ -17,8 +20,20 @@ export class JobsController {
   ) {}
 
   @Get()
-  async getJobs() {
-    return await this.jobsService.getJobs();
+  async getJobs(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return await this.jobsService.getJobs(
+      Number(page) || 1,
+      Number(limit) || 5,
+      search || '',
+      status || '',
+      sort || 'newest',
+    );
   }
 
   @Get('health')
@@ -38,13 +53,7 @@ export class JobsController {
   @Put(':id')
   async updateJob(
     @Param('id') id: string,
-    @Body()
-    body: {
-      title?: string;
-      description?: string;
-      location?: string;
-      status?: string;
-    },
+    @Body() body: UpdateJobDto,
   ) {
     return await this.jobsService.updateJob(
       Number(id),
@@ -63,12 +72,7 @@ export class JobsController {
 
   @Post()
   async createJob(
-    @Body()
-    body: {
-      title: string;
-      description?: string;
-      location?: string;
-    },
+    @Body() body: CreateJobDto,
   ) {
     return await this.jobsService.create(body);
   }
