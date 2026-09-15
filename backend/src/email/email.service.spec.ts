@@ -1,4 +1,5 @@
 import { EmailService } from './email.service.js';
+import { Logger } from '@nestjs/common';
 
 describe('EmailService', () => {
   const fetchMock = jest.fn();
@@ -6,6 +7,7 @@ describe('EmailService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(Logger.prototype, 'error').mockImplementation();
     jest.spyOn(global, 'fetch').mockImplementation(fetchMock as typeof fetch);
     service = new EmailService();
     process.env['RESEND_API_KEY'] = 're_test_key';
@@ -62,5 +64,35 @@ describe('EmailService', () => {
         'https://app.example.test/activate/token',
       ),
     ).rejects.toThrow('The activation email could not be sent');
+
+    expect(Logger.prototype.error).toHaveBeenCalledWith(
+      'Resend email request failed before receiving a response: provider failure',
+    );
+  });
+
+  it('logs a sanitized diagnostic when Resend returns an error response', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 422,
+      text: jest.fn().mockResolvedValue(
+        JSON.stringify({
+          message: 'Invalid API key for user@example.test',
+          token: 'activation-token',
+          url: 'https://api.example.test/error',
+        }),
+      ),
+    } as unknown as Response);
+
+    await expect(
+      service.sendActivationEmail(
+        'user@example.test',
+        'Test User',
+        'https://app.example.test/activate/token',
+      ),
+    ).rejects.toThrow('The activation email could not be sent');
+
+    expect(Logger.prototype.error).toHaveBeenCalledWith(
+      'Resend email request returned HTTP 422: {"message":"Invalid API key for [redacted-email]","token":"[redacted]","url":"[redacted-url]',
+    );
   });
 });

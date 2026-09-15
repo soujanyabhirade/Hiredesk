@@ -1,7 +1,25 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+
+function sanitizeDiagnostic(value: string): string {
+  return value
+    .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
+    .replace(
+      /((?:api[-_]?key|token|password|secret|authorization)\s*["':=]+\s*)["']?[^"',\s}]+/gi,
+      '$1[redacted]',
+    )
+    .replace(/[\w.+-]+@[\w.-]+\.\w+/g, '[redacted-email]')
+    .replace(/https?:\/\/\S+/g, '[redacted-url]')
+    .slice(0, 500);
+}
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
+
   async sendActivationEmail(
     email: string,
     name: string,
@@ -16,8 +34,10 @@ export class EmailService {
       );
     }
 
+    let response: Response;
+
     try {
-      const response = await fetch('https://api.resend.com/emails', {
+      response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -49,10 +69,22 @@ export class EmailService {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Resend returned HTTP ${response.status}`);
-      }
-    } catch {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Resend email request failed before receiving a response: ${sanitizeDiagnostic(errorMessage)}`,
+      );
+      throw new ServiceUnavailableException(
+        'The activation email could not be sent. Please verify the Resend configuration and try again.',
+      );
+    }
+
+    if (!response.ok) {
+      const responseBody = await response.text();
+      this.logger.error(
+        `Resend email request returned HTTP ${response.status}: ${sanitizeDiagnostic(responseBody)}`,
+      );
       throw new ServiceUnavailableException(
         'The activation email could not be sent. Please verify the Resend configuration and try again.',
       );
