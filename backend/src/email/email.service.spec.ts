@@ -10,14 +10,14 @@ describe('EmailService', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
     jest.spyOn(global, 'fetch').mockImplementation(fetchMock as typeof fetch);
     service = new EmailService();
-    process.env['RESEND_API_KEY'] = 're_test_key';
-    process.env['RESEND_FROM'] = 'HireDesk <no-reply@example.test>';
+    process.env['BREVO_API_KEY'] = 'xkeysib-test-key';
+    process.env['BREVO_FROM'] = 'no-reply@example.test';
     fetchMock.mockResolvedValue({ ok: true, status: 202 } as Response);
   });
 
   afterEach(() => {
-    delete process.env['RESEND_API_KEY'];
-    delete process.env['RESEND_FROM'];
+    delete process.env['BREVO_API_KEY'];
+    delete process.env['BREVO_FROM'];
     jest.restoreAllMocks();
   });
 
@@ -30,18 +30,18 @@ describe('EmailService', () => {
       activationUrl,
     );
 
-    expect(fetchMock).toHaveBeenCalledWith('https://api.resend.com/emails', {
+    expect(fetchMock).toHaveBeenCalledWith('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        Authorization: 'Bearer re_test_key',
+        'api-key': 'xkeysib-test-key',
         'Content-Type': 'application/json',
       },
       body: expect.stringContaining(activationUrl),
     });
   });
 
-  it('rejects when Resend is not configured', async () => {
-    delete process.env['RESEND_API_KEY'];
+  it('rejects when Brevo is not configured', async () => {
+    delete process.env['BREVO_API_KEY'];
 
     await expect(
       service.sendActivationEmail(
@@ -54,7 +54,7 @@ describe('EmailService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('surfaces Resend delivery failures without exposing email contents', async () => {
+  it('surfaces Brevo delivery failures without exposing email contents', async () => {
     fetchMock.mockRejectedValue(new Error('provider failure'));
 
     await expect(
@@ -66,16 +66,20 @@ describe('EmailService', () => {
     ).rejects.toThrow('The activation email could not be sent');
 
     expect(Logger.prototype.error).toHaveBeenCalledWith(
-      'Resend email request failed before receiving a response: provider failure',
+      'Brevo email request failed before receiving a response: provider failure',
     );
   });
 
-  it('logs a sanitized diagnostic when Resend returns an error response', async () => {
+  it('logs a sanitized diagnostic when Brevo returns an error response', async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 422,
       text: jest.fn().mockResolvedValue(
         JSON.stringify({
+          apiKey: 'xkeysib-secret-key',
+          password: 'response-password',
+          databaseUrl: 'postgresql://user:database-password@db.example.test:5432/hiredesk',
+          jwtSecret: 'response-jwt-secret',
           message: 'Invalid API key for user@example.test',
           token: 'activation-token',
           url: 'https://api.example.test/error',
@@ -91,8 +95,21 @@ describe('EmailService', () => {
       ),
     ).rejects.toThrow('The activation email could not be sent');
 
-    expect(Logger.prototype.error).toHaveBeenCalledWith(
-      'Resend email request returned HTTP 422: {"message":"Invalid API key for [redacted-email]","token":"[redacted]","url":"[redacted-url]',
-    );
+    const [diagnostic] = (Logger.prototype.error as jest.Mock).mock.calls[0];
+
+    expect(diagnostic).toContain('Brevo email request returned HTTP 422:');
+    expect(diagnostic).toContain('[redacted-email]');
+    expect(diagnostic).toContain('token":"[redacted]');
+    expect(diagnostic).toContain('[redacted-url]');
+    expect(diagnostic).toContain('apiKey":"[redacted]');
+    expect(diagnostic).toContain('password":"[redacted]');
+    expect(diagnostic).toContain('jwtSecret":"[redacted]');
+    expect(diagnostic).not.toContain('user@example.test');
+    expect(diagnostic).not.toContain('xkeysib-secret-key');
+    expect(diagnostic).not.toContain('response-password');
+    expect(diagnostic).not.toContain('postgresql://user:database-password@db.example.test:5432/hiredesk');
+    expect(diagnostic).not.toContain('response-jwt-secret');
+    expect(diagnostic).not.toContain('activation-token');
+    expect(diagnostic).not.toContain('https://api.example.test/error');
   });
 });
