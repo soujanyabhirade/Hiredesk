@@ -627,65 +627,6 @@ The latest local verification for this repository was:
 The E2E runner prints an existing Jest open-handle warning after the tests
 finish, but all 30 tests pass.
 
-## Manual Mentor Test Checklist
-
-### Authentication
-
-- [ ] Create or confirm a demo admin with `npm run bootstrap:admin`.
-- [ ] Start backend and frontend.
-- [ ] Log in at `/login`.
-- [ ] Open `/dashboard`.
-- [ ] Log out.
-- [ ] Try an invalid password and confirm it is rejected.
-- [ ] Open a protected route while logged out and confirm redirect to `/login`.
-
-### User onboarding
-
-- [ ] Open `/users` as an admin.
-- [ ] Provision a `RECRUITER`.
-- [ ] Verify the new account is `PENDING`.
-- [ ] Confirm the activation email was delivered.
-- [ ] Open the activation link from the email and set a password.
-- [ ] Log in as the activated recruiter.
-- [ ] Verify recruiter access to permitted recruitment features.
-- [ ] Verify a non-admin cannot use `/users`.
-
-### Candidates
-
-- [ ] Create a candidate.
-- [ ] Search or filter candidates.
-- [ ] Open candidate details.
-- [ ] Edit the candidate.
-- [ ] Delete the candidate if appropriate.
-
-### Jobs
-
-- [ ] View jobs.
-- [ ] Test filtering, sorting, and pagination.
-- [ ] Open and edit a job.
-
-### Interviews
-
-- [ ] Schedule an interview.
-- [ ] Test status filtering and sorting.
-- [ ] Edit and delete an interview.
-- [ ] Test pagination.
-- [ ] Confirm dropdown selected text and options are readable.
-
-### Feedback
-
-- [ ] Add feedback.
-- [ ] Edit feedback.
-- [ ] Delete feedback.
-- [ ] Test pagination.
-- [ ] Confirm interview and rating dropdowns are readable.
-
-### Dashboard
-
-- [ ] Verify candidate, job, interview, and feedback counts.
-- [ ] Verify recent candidates.
-- [ ] Verify upcoming scheduled interviews.
-
 ## Pagination
 
 Current pagination:
