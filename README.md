@@ -34,9 +34,7 @@ Docker and Docker Compose are not required for the current local setup.
 | HTTP-only cookies | Implemented and locally verified | Next.js API routes store access and refresh tokens in HTTP-only cookies. |
 | Google OAuth | Implemented but externally configured | Code is present; Google Cloud credentials and consent configuration are still required. |
 | GitHub Actions CI | Implemented but externally configured | Workflow is present; repository secrets must be added in GitHub. |
-| Vercel preparation | Implemented as documentation | Deployment is not completed. |
-| CraftedMeal onboarding | Pending | CraftedMeal source or access is not present in this workspace. |
-| Mentor demo and assessment | Pending human activity | Code cannot complete the presentation or feedback process. |
+
 
 ## Project Structure
 
