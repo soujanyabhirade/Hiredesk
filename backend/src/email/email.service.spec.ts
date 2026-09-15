@@ -1,35 +1,22 @@
 import { EmailService } from './email.service.js';
-import nodemailer from 'nodemailer';
-
-jest.mock('nodemailer', () => ({
-  __esModule: true,
-  default: {
-    createTransport: jest.fn(),
-  },
-}));
 
 describe('EmailService', () => {
-  const sendMail = jest.fn();
+  const fetchMock = jest.fn();
   let service: EmailService;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(global, 'fetch').mockImplementation(fetchMock as typeof fetch);
     service = new EmailService();
-    process.env['SMTP_HOST'] = 'smtp.example.test';
-    process.env['SMTP_PORT'] = '587';
-    process.env['SMTP_USER'] = 'smtp-user';
-    process.env['SMTP_PASSWORD'] = 'smtp-password';
-    process.env['SMTP_FROM'] = 'HireDesk <no-reply@example.test>';
-    (nodemailer.createTransport as jest.Mock).mockReturnValue({ sendMail });
-    sendMail.mockResolvedValue({});
+    process.env['RESEND_API_KEY'] = 're_test_key';
+    process.env['RESEND_FROM'] = 'HireDesk <no-reply@example.test>';
+    fetchMock.mockResolvedValue({ ok: true, status: 202 } as Response);
   });
 
   afterEach(() => {
-    delete process.env['SMTP_HOST'];
-    delete process.env['SMTP_PORT'];
-    delete process.env['SMTP_USER'];
-    delete process.env['SMTP_PASSWORD'];
-    delete process.env['SMTP_FROM'];
+    delete process.env['RESEND_API_KEY'];
+    delete process.env['RESEND_FROM'];
+    jest.restoreAllMocks();
   });
 
   it('sends a branded activation email with the configured URL', async () => {
@@ -41,25 +28,18 @@ describe('EmailService', () => {
       activationUrl,
     );
 
-    expect(nodemailer.createTransport).toHaveBeenCalledWith({
-      host: 'smtp.example.test',
-      port: 587,
-      secure: false,
-      auth: { user: 'smtp-user', pass: 'smtp-password' },
+    expect(fetchMock).toHaveBeenCalledWith('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer re_test_key',
+        'Content-Type': 'application/json',
+      },
+      body: expect.stringContaining(activationUrl),
     });
-    expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        from: 'HireDesk <no-reply@example.test>',
-        to: 'user@example.test',
-        subject: 'Activate your HireDesk account',
-        text: expect.stringContaining(activationUrl),
-        html: expect.stringContaining(activationUrl),
-      }),
-    );
   });
 
-  it('rejects when SMTP is not configured', async () => {
-    delete process.env['SMTP_HOST'];
+  it('rejects when Resend is not configured', async () => {
+    delete process.env['RESEND_API_KEY'];
 
     await expect(
       service.sendActivationEmail(
@@ -69,11 +49,11 @@ describe('EmailService', () => {
       ),
     ).rejects.toThrow('Email delivery is not configured');
 
-    expect(nodemailer.createTransport).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('surfaces SMTP delivery failures without exposing email contents', async () => {
-    sendMail.mockRejectedValue(new Error('provider failure'));
+  it('surfaces Resend delivery failures without exposing email contents', async () => {
+    fetchMock.mockRejectedValue(new Error('provider failure'));
 
     await expect(
       service.sendActivationEmail(

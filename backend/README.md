@@ -31,6 +31,10 @@
 $ npm install
 ```
 
+## Email configuration
+
+Activation emails for administrator-provisioned users are sent through the Resend HTTPS API. Copy `.env.example` to `.env`, then set `RESEND_API_KEY` and `RESEND_FROM` to a Resend API key and a verified sender address. Set `FRONTEND_URL` to the frontend address that should receive activation links.
+
 ## Compile and run the project
 
 ```bash
