@@ -197,49 +197,6 @@ BACKEND_URL="http://localhost:3001"
 
 Never commit `.env` files, API keys, passwords, database credentials, JWT secrets, or OAuth secrets.
 
-Application Workflow
-
-Recruitment Workflow
-
-Admin / Recruiter Login
-        ↓
-Dashboard
-        ↓
-Create or Manage Jobs
-        ↓
-Add Candidates
-        ↓
-Associate Candidates with Jobs
-        ↓
-Schedule Interviews
-        ↓
-Conduct Interviews
-        ↓
-Add Interview Feedback
-        ↓
-Review Recruitment Data
-
-User Onboarding Workflow
-
-Admin Login
-        ↓
-Create Internal User
-        ↓
-Assign Role
-        ↓
-Activation Email via Brevo
-        ↓
-User Opens Activation Link
-        ↓
-User Sets Password
-        ↓
-Account Becomes ACTIVE
-        ↓
-User Logs In
-        ↓
-Access Based on Assigned Role
-
-Candidates are recruitment records and are not authenticated system users.
 
 ## Authentication & Authorization
 
