@@ -15,6 +15,8 @@ The repository contains:
 
 Docker and Docker Compose are not required for the current local setup.
 
+Live Demo: HireDesk is deployed and available for testing. The frontend is hosted on Vercel and the backend is hosted on Render. Frontend: https://hiredesk-kappa.vercel.app | User Management: https://hiredesk-kappa.vercel.app/users | Backend: https://hiredesk-yesm.onrender.com | Backend Health: https://hiredesk-yesm.onrender.com/health
+
 ## Current Project Status
 
 | Area | Status | Notes |
