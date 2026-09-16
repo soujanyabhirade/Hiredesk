@@ -1,118 +1,182 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# HireDesk
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 1. Project Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+HireDesk is a recruitment management application for tracking candidates, jobs, interviews, and interview feedback. It includes a Next.js frontend and a NestJS backend backed by PostgreSQL.
 
-## Description
+## Production URLs
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Frontend: [https://hiredesk-kappa.vercel.app](https://hiredesk-kappa.vercel.app)
+- User Management: [https://hiredesk-kappa.vercel.app/users](https://hiredesk-kappa.vercel.app/users)
+- Backend: [https://hiredesk-yesm.onrender.com](https://hiredesk-yesm.onrender.com)
+- Backend Health: [https://hiredesk-yesm.onrender.com/health](https://hiredesk-yesm.onrender.com/health)
 
-## Project setup
+### Important Frontend Routes
 
-```bash
-$ npm install
+- `/login`
+- `/dashboard`
+- `/candidates`
+- `/jobs`
+- `/interviews`
+- `/feedback`
+- `/users`
+
+## 2. Key Features
+
+- Candidate recruitment records with search, sorting, pagination, and job assignment.
+- Job creation and management.
+- Interview scheduling and status management.
+- Interview feedback management.
+- JWT authentication with role-based access control.
+- Administrator-provisioned users with email activation.
+- Google sign-in support when configured.
+- Dashboard summaries for candidates, jobs, interviews, and feedback.
+
+Candidates are recruitment records, not authenticated users.
+
+Activation emails use the Brevo transactional email HTTPS API. Activation links expire after 24 hours and can be used only once.
+
+## 3. Tech Stack
+
+- Frontend: Next.js, React, TypeScript, Tailwind CSS
+- Backend: NestJS, TypeScript
+- Database: PostgreSQL
+- ORM/database access: Prisma ORM Postgres adapter
+- Authentication: JWT, bcryptjs, optional Google OAuth
+- Email: Brevo transactional email HTTPS API
+
+## 4. Project Structure
+
+```text
+backend/       NestJS API, authentication, database access, tests, migrations
+frontend/      Next.js application and API proxy routes
+docs/          Project documentation
 ```
 
-## Email configuration
+## 5. Environment Variables
 
-Activation emails for administrator-provisioned users are sent through the Brevo transactional email HTTPS API. Copy `.env.example` to `.env`, then set `BREVO_API_KEY` and `BREVO_FROM` to a Brevo API key and a verified sender address. Set `FRONTEND_URL` to the frontend address that should receive activation links.
+Copy `backend/.env.example` to `backend/.env` and set the required values. Never commit real credentials.
 
-## Compile and run the project
+### Backend
 
-```bash
-# development
-$ npm run start
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string. |
+| `JWT_SECRET` | Secret used to sign JWTs. |
+| `FRONTEND_URL` | Frontend base URL used in activation links. |
+| `ADMIN_EMAIL` | Email for `bootstrap:admin`. |
+| `ADMIN_PASSWORD` | Password for `bootstrap:admin`. |
+| `ADMIN_NAME` | Display name for `bootstrap:admin`. |
+| `BREVO_API_KEY` | Brevo API key for activation emails. |
+| `BREVO_FROM` | Verified Brevo sender email address. |
 
-# watch mode
-$ npm run start:dev
+Google sign-in also requires `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI`.
 
-# production mode
-$ npm run start:prod
-```
+The frontend can use `BACKEND_URL` to set the backend address. Its local default is `http://localhost:3001`.
 
-## Run tests
+## 6. Local Setup / Running the Project
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Install dependencies in both applications:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cd backend
+npm install
+
+cd ../frontend
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Configure `backend/.env` using the variables above and make sure PostgreSQL is available. Then run the applications in separate terminals:
 
-## Observability
+```bash
+# Backend, from backend/
+npm run start:dev
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+# Frontend, from frontend/
+npm run dev
+```
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+Local URLs:
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3001` when `PORT=3001` is configured; otherwise Nest uses its default port.
 
-## Resources
+To create the initial administrator with the configured admin variables:
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+cd backend
+npm run bootstrap:admin
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 7. Authentication and Roles
 
-## Support
+Users authenticate with email/password or optional Google sign-in. The backend returns JWT access and refresh tokens. Administrator-provisioned users receive a Brevo activation email before setting their password.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Available roles:
 
-## Stay in touch
+- `ADMIN`: user and organization administration.
+- `RECRUITER`: candidate, job, and recruitment workflow access.
+- `INTERVIEWER`: interviews and feedback.
+- `MENTOR`: application role supported by the user model.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Pending users must activate their account before login. Disabled users cannot log in.
 
-## License
+## 8. Main API/Frontend Routes
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Backend API
+
+- `/auth`: register, login, refresh, activation, current user, and Google OAuth.
+- `/users`: administrator-only user provisioning and user management.
+- `/candidates`: candidate records.
+- `/jobs`: job records.
+- `/interviews`: interview records.
+- `/feedback`: interview feedback.
+- `/dashboard`: authenticated dashboard summary.
+- `/health`: backend health check.
+
+Resource endpoints support the CRUD operations implemented by each controller. Protected endpoints require a JWT and, where configured, an allowed role.
+
+### Frontend
+
+- `/login`
+- `/activate/[token]`
+- `/` candidate list
+- `/candidates/[id]` candidate details
+- `/candidates/[id]/edit` candidate editing
+- `/dashboard`
+- `/jobs` and `/jobs/[id]`
+- `/interviews` and `/interviews/[id]`
+- `/feedback`
+- `/users`
+
+The frontend proxies API requests through its `/api` routes and forwards the access token to the backend.
+
+## 9. Testing
+
+From `backend/`:
+
+```bash
+npm test
+npm run test:e2e
+npm run test:cov
+```
+
+From `frontend/`:
+
+```bash
+npm run lint
+npm run build
+```
+
+## 10. Deployment
+
+Deploy the frontend and backend as separate applications. Configure the environment variables in the hosting provider rather than committing `.env` files. Set `FRONTEND_URL` to the deployed frontend URL, `BACKEND_URL` on the frontend to the deployed backend URL, and configure the Brevo API key and verified sender.
+
+No deployed frontend or backend URLs are currently documented in this repository.
+
+## 11. Known Limitations
+
+- The application requires a reachable PostgreSQL database.
+- Google sign-in requires separate Google OAuth configuration.
+- Email activation requires a verified Brevo sender and valid Brevo credentials.
+- The backend E2E tests require the configured database to be reachable.
