@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      const response = await fetch(
+      const response = await apiFetch(
         "/api/auth/login",
         {
           method: "POST",
@@ -36,6 +37,7 @@ export default function LoginPage() {
             email,
             password,
           }),
+          skipAuthRefresh: true,
         },
       );
 

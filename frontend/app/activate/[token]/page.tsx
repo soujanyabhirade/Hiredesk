@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 export default function ActivatePage() {
   const { token } = useParams<{ token: string }>();
@@ -16,10 +17,11 @@ export default function ActivatePage() {
     setSaving(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/activate", {
+      const response = await apiFetch("/api/auth/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
+        skipAuthRefresh: true,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.message || "Activation failed.");

@@ -43,37 +43,12 @@ export default function DashboardPage() {
         setLoading(true);
         setError("");
 
-        let response = await apiFetch(
+        const response = await apiFetch(
           "/api/dashboard",
           {
             cache: "no-store",
           },
         );
-
-        if (response.status === 401) {
-          const refreshResponse =
-            await apiFetch(
-              "/api/auth/refresh",
-              {
-                method: "POST",
-              },
-            );
-
-          if (!refreshResponse.ok) {
-            window.location.replace(
-              "/login",
-            );
-
-            return;
-          }
-
-          response = await apiFetch(
-            "/api/dashboard",
-            {
-              cache: "no-store",
-            },
-          );
-        }
 
         const data =
           await response.json();
