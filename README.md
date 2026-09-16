@@ -723,65 +723,6 @@ Production smoke test:
 - Backend health endpoint.
 - Rejected unauthenticated API request.
 
-## Troubleshooting
-
-### Port already in use
-
-Set a different `PORT` for the backend and update frontend `BACKEND_URL`, or
-stop the process using the configured port.
-
-### Frontend cannot reach backend
-
-Confirm the backend is running, confirm its port, and ensure
-`frontend/.env.local` contains the matching `BACKEND_URL`. Restart the
-frontend after changing environment variables.
-
-### Invalid email or password
-
-Confirm the email exists, the account is `ACTIVE`, and the password matches.
-The bootstrap message `Admin account confirmed` can refer to an existing
-account and does not necessarily mean its password was reset.
-
-### Database connection failure
-
-Confirm PostgreSQL is running, `DATABASE_URL` is valid, and the database user
-has access to the named database.
-
-### Migration or contract problems
-
-Run `npx prisma migration status` from `backend`. Do not delete migrations.
-If the contract was intentionally changed, run `npm run contract:emit`.
-
-### Missing environment variables
-
-Copy `.env.example` to `.env`, fill placeholders, and restart the relevant
-process. Never paste secrets into source files or README.md.
-
-### Admin bootstrap problems
-
-Run the command from `backend` and confirm `DATABASE_URL` points to the same
-database used by the running backend. Existing accounts may need their
-password reset through an approved account-management process; rerunning the
-current bootstrap command does not reset an existing password.
-
-### OAuth configuration problems
-
-Confirm the three Google variables, the exact redirect URI, the OAuth consent
-screen, allowed test users, and that the Google email belongs to an active
-HireDesk user.
-
-## Security Notes
-
-- Do not commit `.env` files.
-- Do not commit database credentials, JWT secrets, Google OAuth secrets,
-  passwords, or tokens.
-- Passwords are hashed with bcrypt.
-- Refresh-token digests are hashed before storage.
-- HTTP-only cookies are used for frontend token storage.
-- Activation tokens are one-time and expiring; handle them securely.
-- Production secrets must be provided through environment variables.
-- Do not use email address as a substitute for role authorization.
-
 ## Demo Flow
 
 Suggested 10-minute demo:
@@ -801,36 +742,6 @@ Suggested 10-minute demo:
 
 The actual demo and mentor feedback remain human activities.
 
-## Known Limitations and Pending Items
 
-- Google OAuth requires Google Cloud configuration and real environment
-  variables.
-- GitHub Actions requires repository secrets.
-- Vercel deployment has not been performed.
-- CraftedMeal is not present or accessible in this workspace, so no API
-  contract has been invented.
-- A mentor/customer must assign the first real feature.
-- Demo presentation, mentor feedback, and assessment are not code-completable.
-- Docker/Docker Compose is intentionally skipped.
-- Pull-request and peer-review activities are intentionally skipped.
 
-## Development Guidelines
 
-For a new collaborator:
-
-1. Create a working branch when appropriate.
-2. Install backend and frontend dependencies.
-3. Configure local environment files.
-4. Run the backend and frontend locally.
-5. Run the targeted tests before and after changes.
-6. Run the complete lint, type-check, build, unit, E2E, and diff checks before
-   submitting work.
-7. Keep secrets out of source control.
-
-## Additional Documentation
-
-- [Internship plan audit and deployment guide](docs/INTERNSHIP_PLAN.md)
-- [Backend README](backend/README.md)
-- [Prisma Next project notes](backend/prisma-next.md)
-- [Database ERD](backend/docs/ERD.md)
-- [GitHub Actions workflow](.github/workflows/ci.yml)
