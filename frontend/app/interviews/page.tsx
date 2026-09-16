@@ -92,7 +92,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -106,7 +106,7 @@ export default function InterviewsPage() {
         throw new Error(message);
       }
 
-      setInterviews(data);
+      setInterviews(data as Interview[]);
       setPage(1);
     } catch (err) {
       setError(
@@ -135,7 +135,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -149,7 +149,7 @@ export default function InterviewsPage() {
         throw new Error(message);
       }
 
-      const candidatesData: CandidatesResponse = data;
+      const candidatesData: CandidatesResponse = data as CandidatesResponse;
 
       setCandidates(candidatesData.data);
     } catch (err) {
@@ -226,7 +226,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -323,7 +323,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -379,7 +379,7 @@ export default function InterviewsPage() {
         return;
       }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =

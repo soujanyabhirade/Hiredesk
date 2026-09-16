@@ -41,7 +41,7 @@ export default function UsersPage() {
       window.location.replace("/dashboard");
       return;
     }
-    const data = await response.json();
+    const data = await response.json<User[] & { message?: string }>();
     if (!response.ok) throw new Error(data?.message || "Failed to load users.");
     setUsers(data);
   }
@@ -65,7 +65,7 @@ export default function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, role }),
       });
-      const data = await response.json();
+      const data = await response.json<{ user: User; message?: string }>();
       if (!response.ok) throw new Error(data?.message || "Failed to provision user.");
       setUsers((current) => [...current, data.user]);
       setName("");
@@ -86,7 +86,7 @@ export default function UsersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(changes),
       });
-      const data = await response.json();
+      const data = await response.json<User & { message?: string }>();
       if (!response.ok) throw new Error(data?.message || "Failed to update user.");
       setUsers((current) => current.map((item) => item.id === user.id ? data : item));
     } catch (err) {

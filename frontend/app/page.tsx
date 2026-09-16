@@ -33,6 +33,16 @@ type CandidatesResponse = {
   total: number;
 };
 
+type JobsResponse = {
+  data: Job[];
+  page: number;
+  limit: number;
+  search: string;
+  status: string | null;
+  sort: string;
+  total: number;
+};
+
 export default function CandidatesPage() {
   const [candidates, setCandidates] =
     useState<Candidate[]>([]);
@@ -99,12 +109,10 @@ export default function CandidatesPage() {
           return;
         }
 
-        const data = await response
-          .json()
-          .catch(() => null);
+        const data = await response.json<{ message?: string | string[] }>().catch(() => null);
 
         throw new Error(
-          data?.message ||
+          (data?.message as string) ||
             "Failed to load candidates.",
         );
       }
@@ -144,17 +152,15 @@ export default function CandidatesPage() {
           return;
         }
 
-        const data = await response
-          .json()
-          .catch(() => null);
+        const data = await response.json<{ message?: string | string[] }>().catch(() => null);
 
         throw new Error(
-          data?.message ||
+          (data?.message as string) ||
             "Failed to load jobs.",
         );
       }
 
-      const data = await response.json();
+      const data = await response.json<JobsResponse>();
 
       setJobs(data.data || []);
     } catch (error) {
@@ -212,9 +218,7 @@ export default function CandidatesPage() {
           return;
         }
 
-        const data = await response
-          .json()
-          .catch(() => null);
+        const data = await response.json<{ message?: string | string[] }>().catch(() => null);
 
         let errorMessage =
           data?.message ||
@@ -281,7 +285,7 @@ export default function CandidatesPage() {
 
         const errorData = await response
           .json()
-          .catch(() => null);
+          .catch(() => null) as { message?: string | string[] } | null;
 
         let errorMessage =
           errorData?.message ||

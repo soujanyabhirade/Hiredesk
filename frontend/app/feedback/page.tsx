@@ -72,8 +72,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const data =
-        await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -87,7 +86,7 @@ export default function FeedbackPage() {
         throw new Error(message);
       }
 
-      setFeedback(data);
+      setFeedback(data as Feedback[]);
       setPage(1);
     } catch (err) {
       setError(
@@ -116,8 +115,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const data =
-        await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -131,7 +129,7 @@ export default function FeedbackPage() {
         throw new Error(message);
       }
 
-      setInterviews(data);
+      setInterviews(data as Interview[]);
     } catch (err) {
       setError(
         err instanceof Error
@@ -161,7 +159,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const data = await response.json();
+      const data = await response.json<{ data: Candidate[] }>();
 
       setCandidates(data.data || []);
     } catch {
@@ -247,8 +245,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const data =
-        await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =
@@ -333,8 +330,7 @@ export default function FeedbackPage() {
         return;
       }
 
-      const data =
-        await response.json().catch(() => null);
+      const data = await response.json<{ message?: string }>().catch(() => null);
 
       if (!response.ok) {
         let message =

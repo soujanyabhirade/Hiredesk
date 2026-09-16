@@ -23,7 +23,7 @@ export default function ActivatePage() {
         body: JSON.stringify({ token, password }),
         skipAuthRefresh: true,
       });
-      const data = await response.json();
+      const data = await response.json<{ message?: string }>();
       if (!response.ok) throw new Error(data?.message || "Activation failed.");
       router.replace("/login");
     } catch (err) {

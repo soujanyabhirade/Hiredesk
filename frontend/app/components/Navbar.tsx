@@ -11,7 +11,7 @@ export default function Navbar() {
 
   useEffect(() => {
     apiFetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
+      .then((response) => response.ok ? response.json<{ role: string }>() : null)
       .then((user) => setIsAdmin(user?.role === "ADMIN"))
       .catch(() => setIsAdmin(false));
   }, []);

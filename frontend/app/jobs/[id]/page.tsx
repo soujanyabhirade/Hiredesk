@@ -222,8 +222,7 @@ export default function JobDetailsPage() {
           "Could not delete this job.";
 
         try {
-          const data =
-            await response.json();
+          const data = await response.json<{ message?: string }>();
 
           if (
             typeof data.message ===

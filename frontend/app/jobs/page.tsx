@@ -107,10 +107,7 @@ export default function JobsPage() {
           return;
         }
 
-        const data =
-          await response
-            .json()
-            .catch(() => null);
+        const data = await response.json<{ message?: string }>().catch(() => null);
 
         throw new Error(
           data?.message ||
@@ -199,8 +196,7 @@ export default function JobsPage() {
           "Could not delete this job.";
 
         try {
-          const data =
-            await response.json();
+          const data = await response.json<{ message?: string }>();
 
           if (
             typeof data.message ===

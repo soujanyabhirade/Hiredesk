@@ -50,7 +50,7 @@ export default function DashboardPage() {
           },
         );
 
-        const data =
+        const data: DashboardStats & { message?: string } =
           await response.json();
 
         if (!response.ok) {

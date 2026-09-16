@@ -51,10 +51,7 @@ export default function InterviewDetailsPage() {
         );
 
         if (!interviewResponse.ok) {
-          const data =
-            await interviewResponse
-              .json()
-              .catch(() => null);
+          const data = await interviewResponse.json<{ message?: string }>().catch(() => null);
 
           throw new Error(
             data?.message ||

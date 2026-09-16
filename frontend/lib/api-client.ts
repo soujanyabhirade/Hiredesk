@@ -17,7 +17,7 @@ type ApiFetchInit = RequestInit & {
 export type ApiResponse = {
   ok: boolean;
   status: number;
-  json: <T = any>() => Promise<T>;
+  json: <T = unknown>() => Promise<T>;
 };
 
 /**
