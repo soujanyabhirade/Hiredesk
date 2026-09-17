@@ -7,7 +7,11 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
+import { Roles } from '../auth/decorators/roles.decorator.js';
 
 import { JobsService } from './jobs.service.js';
 import { CreateJobDto } from './dto/create-job.dto.js';
@@ -71,6 +75,8 @@ export class JobsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'RECRUITER')
   async createJob(
     @Body() body: CreateJobDto,
   ) {
