@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export function proxy(request: NextRequest) {
   const accessToken =
-    request.cookies.get("access_token")?.value;
+    request.cookies.get("refresh_token")?.value;
 
   const isProtectedRoute =
     request.nextUrl.pathname === "/" ||
