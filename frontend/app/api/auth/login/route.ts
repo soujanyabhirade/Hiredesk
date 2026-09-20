@@ -36,20 +36,9 @@ export async function POST(request: Request) {
 
     const nextResponse =
       NextResponse.json({
+        access_token: data.access_token,
         message: "Login successful.",
       });
-
-    nextResponse.cookies.set(
-      "access_token",
-      data.access_token,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60,
-      },
-    );
 
     nextResponse.cookies.set(
       "refresh_token",

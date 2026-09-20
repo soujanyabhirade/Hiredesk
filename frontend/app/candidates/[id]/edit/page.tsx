@@ -49,7 +49,7 @@ export default function EditCandidatePage() {
         setError("");
 
         const candidateResponse =
-          await apiFetch(`/api/candidates/${candidateId}`);
+          await apiFetch(`/candidates/${candidateId}`);
 
         if (!candidateResponse.ok) {
           if (candidateResponse.status === 404) {
@@ -73,7 +73,7 @@ export default function EditCandidatePage() {
           await candidateResponse.json();
 
         const jobsResponse = await apiFetch(
-          "/api/jobs?limit=50",
+          "/jobs?limit=50",
         );
 
         if (!jobsResponse.ok) {
@@ -124,7 +124,7 @@ export default function EditCandidatePage() {
       setError("");
 
       const response = await apiFetch(
-        `/api/candidates/${candidateId}`,
+        `/candidates/${candidateId}`,
         {
           method: "PUT",
           headers: {

@@ -62,7 +62,7 @@ export default function JobDetailsPage() {
         setError("");
 
         const response = await apiFetch(
-          `/api/jobs/${id}`,
+          `/jobs/${id}`,
         );
 
         if (!response.ok) {
@@ -146,7 +146,7 @@ export default function JobDetailsPage() {
       setSaving(true);
 
       const response =
-        await apiFetch(`/api/jobs/${id}`, {
+        await apiFetch(`/jobs/${id}`, {
             method: "PUT",
             headers: {
               "Content-Type":
@@ -213,7 +213,7 @@ export default function JobDetailsPage() {
       setDeleting(true);
 
       const response =
-        await apiFetch(`/api/jobs/${id}`, {
+        await apiFetch(`/jobs/${id}`, {
             method: "DELETE",
           });
 

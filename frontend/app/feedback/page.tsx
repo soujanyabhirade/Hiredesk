@@ -63,7 +63,7 @@ export default function FeedbackPage() {
       setLoading(true);
       setError("");
 
-      const response = await apiFetch("/api/feedback", {
+      const response = await apiFetch("/feedback", {
         cache: "no-store",
       });
 
@@ -104,7 +104,7 @@ export default function FeedbackPage() {
       setLoadingInterviews(true);
 
       const response = await apiFetch(
-        "/api/interviews",
+        "/interviews",
         {
           cache: "no-store",
         },
@@ -144,7 +144,7 @@ export default function FeedbackPage() {
   async function loadCandidates() {
     try {
       const response = await apiFetch(
-        "/api/candidates?limit=50",
+        "/candidates?limit=50",
         {
           cache: "no-store",
         },
@@ -228,8 +228,8 @@ export default function FeedbackPage() {
 
       const response = await apiFetch(
         editingId !== null
-          ? `/api/feedback/${editingId}`
-          : "/api/feedback",
+          ? `/feedback/${editingId}`
+          : "/feedback",
         {
           method:
             editingId !== null ? "PUT" : "POST",
@@ -319,7 +319,7 @@ export default function FeedbackPage() {
       setSuccess("");
 
       const response = await apiFetch(
-        `/api/feedback/${id}`,
+        `/feedback/${id}`,
         {
           method: "DELETE",
         },

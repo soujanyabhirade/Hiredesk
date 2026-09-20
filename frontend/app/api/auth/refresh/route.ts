@@ -45,34 +45,16 @@ export async function POST(request: NextRequest) {
           },
         );
 
-      nextResponse.cookies.delete(
-        "access_token",
-      );
-
-      nextResponse.cookies.delete(
-        "refresh_token",
-      );
+      nextResponse.cookies.delete("refresh_token");
 
       return nextResponse;
     }
 
     const nextResponse =
       NextResponse.json({
+        access_token: data.access_token,
         message: "Token refreshed successfully.",
       });
-
-    nextResponse.cookies.set(
-      "access_token",
-      data.access_token,
-      {
-        httpOnly: true,
-        secure:
-          process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60,
-      },
-    );
 
     nextResponse.cookies.set(
       "refresh_token",

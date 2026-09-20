@@ -17,7 +17,7 @@ export default function ActivatePage() {
     setSaving(true);
     setError("");
     try {
-      const response = await apiFetch("/api/auth/activate", {
+      const response = await apiFetch("/auth/activate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),

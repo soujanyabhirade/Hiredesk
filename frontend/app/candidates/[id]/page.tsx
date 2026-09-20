@@ -40,7 +40,7 @@ export default function CandidateDetailsPage() {
         setError("");
 
         const response = await apiFetch(
-          `/api/candidates/${candidateId}`,
+          `/candidates/${candidateId}`,
         );
 
         if (!response.ok) {

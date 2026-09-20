@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, authFetch } from "@/lib/api-client";
 
 type Job = {
   id: number;
@@ -62,7 +62,7 @@ export default function JobsPage() {
   const canCreateJob = userRole === "ADMIN" || userRole === "RECRUITER";
 
   useEffect(() => {
-    apiFetch("/api/auth/me", {
+    authFetch("/api/auth/me", {
       cache: "no-store",
       skipAuthRefresh: true,
     })
@@ -94,7 +94,7 @@ export default function JobsPage() {
         params.set("sort", sort);
       }
 
-      const response = await apiFetch(`/api/jobs?${params.toString()}`, {
+      const response = await apiFetch(`/jobs?${params.toString()}`, {
         cache: "no-store",
       });
 
@@ -156,7 +156,7 @@ export default function JobsPage() {
       setError("");
       setDeletingId(job.id);
 
-      const response = await apiFetch(`/api/jobs/${job.id}`, {
+      const response = await apiFetch(`/jobs/${job.id}`, {
         method: "DELETE",
       });
 
@@ -228,7 +228,7 @@ export default function JobsPage() {
     setCreating(true);
 
     try {
-      const response = await apiFetch("/api/jobs", {
+      const response = await apiFetch("/jobs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

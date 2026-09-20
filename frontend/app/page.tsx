@@ -97,7 +97,7 @@ export default function CandidatesPage() {
       }
 
         const response = await apiFetch(
-        `/api/candidates?${params.toString()}`,
+        `/candidates?${params.toString()}`,
         {
           cache: "no-store",
         },
@@ -140,7 +140,7 @@ export default function CandidatesPage() {
       setLoadingJobs(true);
 
       const response = await apiFetch(
-        "/api/jobs?limit=50",
+        "/jobs?limit=50",
         {
           cache: "no-store",
         },
@@ -197,7 +197,7 @@ export default function CandidatesPage() {
       setSuccess("");
 
       const response = await apiFetch(
-        "/api/candidates",
+        "/candidates",
         {
           method: "POST",
           headers: {
@@ -271,7 +271,7 @@ export default function CandidatesPage() {
       setSuccess("");
 
       const response = await apiFetch(
-        `/api/candidates/${id}`,
+        `/candidates/${id}`,
         {
           method: "DELETE",
         },

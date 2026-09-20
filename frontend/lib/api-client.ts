@@ -1,6 +1,5 @@
 import axios, {
   type AxiosRequestConfig,
-  type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
 
@@ -10,7 +9,6 @@ type RetryableConfig = InternalAxiosRequestConfig & {
 };
 
 type ApiFetchInit = RequestInit & {
-  /** Use for login, activation, logout, and refresh requests. */
   skipAuthRefresh?: boolean;
 };
 
@@ -20,46 +18,86 @@ export type ApiResponse = {
   json: <T = unknown>() => Promise<T>;
 };
 
-/**
- * The single browser API client. Requests stay same-origin so the Next BFF
- * routes can continue to protect the HTTP-only access and refresh cookies.
- */
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
+
+let memoryAccessToken: string | null = null;
+let refreshPromise: Promise<void> | null = null;
+let initPromise: Promise<void> | null = null;
+
 export const api = axios.create({
+  baseURL: BACKEND_URL,
+  withCredentials: true,
+  validateStatus: () => true,
+});
+
+export const authApi = axios.create({
   baseURL: "/",
   withCredentials: true,
   validateStatus: () => true,
 });
 
-let refreshPromise: Promise<AxiosResponse> | null = null;
+function setMemoryToken(token: string | null) {
+  memoryAccessToken = token;
+}
 
-function refreshSession() {
-  if (!refreshPromise) {
-    refreshPromise = api.post("/api/auth/refresh", undefined, {
-      skipAuthRefresh: true,
-    } as AxiosRequestConfig);
+function getMemoryToken(): string | null {
+  return memoryAccessToken;
+}
 
-    void refreshPromise.then(
-      () => {
-        refreshPromise = null;
-      },
-      () => {
-        refreshPromise = null;
-      },
-    );
+async function initializeAuth(): Promise<void> {
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        const resp = await authApi.post("/api/auth/refresh", undefined, {
+          skipAuthRefresh: true,
+        } as AxiosRequestConfig);
+        if (resp.status === 200 && resp.data?.access_token) {
+          memoryAccessToken = resp.data.access_token;
+        }
+      } catch {
+        memoryAccessToken = null;
+      }
+    })();
   }
+  return initPromise;
+}
 
+async function refreshAccessToken(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const resp = await authApi.post("/api/auth/refresh", undefined, {
+        skipAuthRefresh: true,
+      } as AxiosRequestConfig);
+      if (resp.status === 200 && resp.data?.access_token) {
+        memoryAccessToken = resp.data.access_token;
+      } else {
+        memoryAccessToken = null;
+        throw new Error("Refresh failed");
+      }
+    })();
+  }
   return refreshPromise;
 }
 
 function expireSession() {
+  memoryAccessToken = null;
   if (typeof window !== "undefined") {
     window.location.replace("/login");
   }
 }
 
+api.interceptors.request.use(async (config) => {
+  await initPromise;
+  if (memoryAccessToken) {
+    config.headers.Authorization = `Bearer ${memoryAccessToken}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(async (response) => {
   const config = response.config as RetryableConfig;
-  const isRefreshRequest = config.url === "/api/auth/refresh";
+  const isRefreshRequest = config.url?.includes("/auth/refresh");
 
   if (
     response.status !== 401 ||
@@ -71,37 +109,27 @@ api.interceptors.response.use(async (response) => {
   }
 
   config._retry = true;
-  let refreshResponse: AxiosResponse;
 
   try {
-    refreshResponse = await refreshSession();
+    await refreshAccessToken();
+    return api.request(config);
   } catch {
     expireSession();
     return response;
   }
-
-  if (refreshResponse.status < 200 || refreshResponse.status >= 300) {
-    expireSession();
-    return response;
-  }
-
-  return api.request(config);
 });
 
-function requestUrl(input: RequestInfo | URL) {
+function requestUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
   if (input instanceof URL) return input.toString();
   return input.url;
 }
 
-/**
- * Compatibility wrapper for the existing pages while all network traffic is
- * performed by the Axios instance above.
- */
 export async function apiFetch(
   input: RequestInfo | URL,
   init?: ApiFetchInit,
 ): Promise<ApiResponse> {
+  await initPromise;
   const response = await api.request({
     url: requestUrl(input),
     method: init?.method,
@@ -116,3 +144,24 @@ export async function apiFetch(
     json: async <T>() => response.data as T,
   };
 }
+
+export async function authFetch(
+  input: RequestInfo | URL,
+  init?: ApiFetchInit,
+): Promise<ApiResponse> {
+  const response = await authApi.request({
+    url: requestUrl(input),
+    method: init?.method,
+    headers: init?.headers,
+    data: init?.body,
+    skipAuthRefresh: init?.skipAuthRefresh,
+  } as AxiosRequestConfig);
+
+  return {
+    ok: response.status >= 200 && response.status < 300,
+    status: response.status,
+    json: async <T>() => response.data as T,
+  };
+}
+
+export { setMemoryToken, getMemoryToken, initializeAuth, refreshAccessToken };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiFetch } from "@/lib/api-client";
+import { authFetch } from "@/lib/api-client";
 
 export default function Navbar() {
   const [loggingOut, setLoggingOut] =
@@ -10,7 +10,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    apiFetch("/api/auth/me", {
+    authFetch("/api/auth/me", {
       cache: "no-store",
       skipAuthRefresh: true,
     })
@@ -23,7 +23,7 @@ export default function Navbar() {
     try {
       setLoggingOut(true);
 
-      await apiFetch("/api/auth/logout", {
+      await authFetch("/api/auth/logout", {
         method: "POST",
         skipAuthRefresh: true,
       });

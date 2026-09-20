@@ -34,13 +34,6 @@ export async function GET(request: NextRequest) {
     const nextResponse = NextResponse.redirect(
       new URL("/dashboard", request.url),
     );
-    nextResponse.cookies.set("access_token", data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60,
-    });
     nextResponse.cookies.set("refresh_token", data.refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

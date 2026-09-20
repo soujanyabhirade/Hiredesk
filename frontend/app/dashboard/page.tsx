@@ -44,7 +44,7 @@ export default function DashboardPage() {
         setError("");
 
         const response = await apiFetch(
-          "/api/dashboard",
+          "/dashboard",
           {
             cache: "no-store",
           },

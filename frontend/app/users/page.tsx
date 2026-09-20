@@ -36,7 +36,7 @@ export default function UsersPage() {
   );
 
   async function loadUsers() {
-    const response = await apiFetch("/api/users", { cache: "no-store" });
+    const response = await apiFetch("/users", { cache: "no-store" });
     if (response.status === 401 || response.status === 403) {
       window.location.replace("/dashboard");
       return;
@@ -60,7 +60,7 @@ export default function UsersPage() {
     setError("");
     setSuccess("");
     try {
-      const response = await apiFetch("/api/users", {
+      const response = await apiFetch("/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, role }),
@@ -81,7 +81,7 @@ export default function UsersPage() {
   async function updateUser(user: User, changes: { role?: string; status?: string }) {
     setError("");
     try {
-      const response = await apiFetch(`/api/users/${user.id}`, {
+      const response = await apiFetch(`/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(changes),

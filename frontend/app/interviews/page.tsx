@@ -81,7 +81,7 @@ export default function InterviewsPage() {
       params.set('sort', sort);
 
       const response = await apiFetch(
-        `/api/interviews?${params.toString()}`,
+        `/interviews?${params.toString()}`,
         {
           cache: 'no-store',
         },
@@ -124,7 +124,7 @@ export default function InterviewsPage() {
       setLoadingCandidates(true);
 
       const response = await apiFetch(
-        '/api/candidates?limit=50',
+        '/candidates?limit=50',
         {
           cache: 'no-store',
         },
@@ -207,7 +207,7 @@ export default function InterviewsPage() {
       setError('');
       setSuccess('');
 
-      const response = await apiFetch('/api/interviews', {
+      const response = await apiFetch('/interviews', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -302,7 +302,7 @@ export default function InterviewsPage() {
       setSuccess('');
 
       const response = await apiFetch(
-        `/api/interviews/${editingId}`,
+        `/interviews/${editingId}`,
         {
           method: 'PUT',
           headers: {
@@ -368,7 +368,7 @@ export default function InterviewsPage() {
       setSuccess('');
 
       const response = await apiFetch(
-        `/api/interviews/${id}`,
+        `/interviews/${id}`,
         {
           method: 'DELETE',
         },

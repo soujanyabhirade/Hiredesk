@@ -47,7 +47,7 @@ export default function InterviewDetailsPage() {
         setError('');
 
         const interviewResponse = await apiFetch(
-          '/api/interviews',
+          '/interviews',
         );
 
         if (!interviewResponse.ok) {
@@ -76,7 +76,7 @@ export default function InterviewDetailsPage() {
         setInterview(foundInterview);
 
         const candidateResponse = await apiFetch(
-          '/api/candidates?limit=50',
+          '/candidates?limit=50',
         );
 
         if (candidateResponse.ok) {
