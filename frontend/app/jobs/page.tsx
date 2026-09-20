@@ -6,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { apiFetch, authFetch } from "@/lib/api-client";
+import { apiFetch, authFetch, initializeAuth } from "@/lib/api-client";
 
 type Job = {
   id: number;
@@ -62,11 +62,12 @@ export default function JobsPage() {
   const canCreateJob = userRole === "ADMIN" || userRole === "RECRUITER";
 
   useEffect(() => {
-    authFetch("/api/auth/me", {
-      cache: "no-store",
-      skipAuthRefresh: true,
-    })
-      .then((response) => (response.ok ? response.json<{ role: string }>() : null))
+    initializeAuth()
+      .then(() => authFetch("/api/auth/me", {
+        cache: "no-store",
+        skipAuthRefresh: true,
+      }))
+      .then((response) => response.ok ? response.json<{ role: string }>() : null)
       .then((user) => setUserRole((user?.role as UserRole) || null))
       .catch(() => setUserRole(null))
       .finally(() => setRoleLoading(false));

@@ -87,6 +87,13 @@ function expireSession() {
   }
 }
 
+authApi.interceptors.request.use((config) => {
+  if (memoryAccessToken) {
+    config.headers.Authorization = `Bearer ${memoryAccessToken}`;
+  }
+  return config;
+});
+
 api.interceptors.request.use(async (config) => {
   await initPromise;
   if (memoryAccessToken) {
