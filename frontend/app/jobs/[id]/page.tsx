@@ -9,6 +9,7 @@ import { Input } from "@/app/components/ui/Input";
 import { Textarea } from "@/app/components/ui/Textarea";
 import { Select } from "@/app/components/ui/Select";
 import { Badge } from "@/app/components/ui/Badge";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
 
 type Job = {
   id: number;
@@ -192,12 +193,13 @@ export default function JobDetailsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-center text-slate-600">
-              Loading job…
-            </p>
+          <CardSkeleton lines={2} />
+          <div className="mt-6 space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} lines={2} />
+            ))}
           </div>
         </div>
       </main>
@@ -206,15 +208,21 @@ export default function JobDetailsPage() {
 
   if (error && !job) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <Alert variant="error" className="rounded-xl">
-            {error}
-          </Alert>
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Unable to load job
+            </h1>
 
-          <Button variant="ghost" size="sm" href="/jobs" className="mt-4">
-            ← Back to Jobs
-          </Button>
+            <Alert variant="error" className="mt-4">
+              {error}
+            </Alert>
+
+            <Button variant="primary" href="/jobs" className="mt-6">
+              Back to Jobs
+            </Button>
+          </div>
         </div>
       </main>
     );
@@ -222,22 +230,24 @@ export default function JobDetailsPage() {
 
   if (!job) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-slate-700">Job not found.</p>
-          </div>
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Job not found
+            </h1>
 
-          <Button variant="ghost" size="sm" href="/jobs" className="mt-4">
-            ← Back to Jobs
-          </Button>
+            <Button variant="primary" href="/jobs" className="mt-6">
+              Back to Jobs
+            </Button>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-3xl px-4">
         <Button variant="ghost" size="sm" href="/jobs">
           ← Back to Jobs
@@ -247,14 +257,14 @@ export default function JobDetailsPage() {
         {success && <Alert variant="success" className="mt-6">{success}</Alert>}
 
         {!editing ? (
-          <div className="mt-6 rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+          <div className="mt-6 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
                   Job #{job.id}
                 </p>
 
-                <h1 className="mt-2 text-3xl font-bold text-slate-900">
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
                   {job.title}
                 </h1>
               </div>
@@ -267,32 +277,62 @@ export default function JobDetailsPage() {
               </Badge>
             </div>
 
-            <div className="mt-8 space-y-6">
-              <section>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+                <p className="text-sm font-medium text-slate-500">
+                  Title
+                </p>
+                <p className="mt-2 font-semibold text-slate-900">
+                  {job.title}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+                <p className="text-sm font-medium text-slate-500">
+                  Status
+                </p>
+                <p className="mt-2">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                      job.status.toLowerCase() === "open"
+                        ? "bg-green-50 text-green-700 ring-1 ring-green-200/60"
+                        : "bg-slate-100 text-slate-600 ring-1 ring-slate-200/60"
+                    }`}
+                  >
+                    {job.status}
+                  </span>
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+                <p className="text-sm font-medium text-slate-500">
+                  Location
+                </p>
+                <p className="mt-2 font-semibold text-slate-900">
+                  {job.location || "Not provided"}
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+                <p className="text-sm font-medium text-slate-500">
+                  Job ID
+                </p>
+                <p className="mt-2 font-semibold text-slate-900">
+                  #{job.id}
+                </p>
+              </div>
+            </div>
+
+            {job.description && (
+              <section className="mt-8">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                   Description
                 </h2>
-                <p className="mt-2 text-slate-700">
-                  {job.description || "No description provided."}
+                <p className="mt-2 text-slate-700 leading-relaxed">
+                  {job.description}
                 </p>
               </section>
-
-              <section>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                  Location
-                </h2>
-                <p className="mt-2 text-slate-700">
-                  {job.location || "No location provided."}
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                  Status
-                </h2>
-                <p className="mt-2 text-slate-700">{job.status}</p>
-              </section>
-            </div>
+            )}
 
             <div className="mt-8 flex flex-wrap gap-3 border-t border-slate-200 pt-6">
               <Button variant="primary" onClick={startEditing}>
@@ -312,18 +352,16 @@ export default function JobDetailsPage() {
         ) : (
           <form
             onSubmit={handleSubmit}
-            className="mt-6 rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50"
+            className="mt-6 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50"
           >
-            <div className="mb-8">
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-                Job #{job.id}
-              </p>
-              <h1 className="mt-2 text-3xl font-bold text-slate-900">
-                Edit Job
-              </h1>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
+              Job #{job.id}
+            </p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              Edit Job
+            </h1>
 
-            <div className="space-y-5">
+            <div className="mt-8 space-y-5">
               <Input
                 id="title"
                 label="Title"

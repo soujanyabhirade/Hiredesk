@@ -34,7 +34,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+        "inline-flex min-h-6 items-center rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors duration-150",
         badgeColors[color],
         className,
       )}

@@ -9,7 +9,8 @@ import { Textarea } from "@/app/components/ui/Textarea";
 import { Badge } from "@/app/components/ui/Badge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Pagination } from "@/app/components/Pagination";
-import { DocumentTextIcon, StarIcon } from "@/app/components/ui/Icons";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
+import { DocumentTextIcon, StarIcon, ClockIcon, CalendarIcon, UserIcon } from "@/app/components/ui/Icons";
 
 type Feedback = {
   id: number;
@@ -360,20 +361,19 @@ export default function FeedbackPage() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-5xl px-4">
-        <header className="mb-10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+        <header className="mb-8 sm:mb-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
             HireDesk
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Feedback
           </h1>
 
-          <p className="mt-2 text-slate-600">
-            Review and manage feedback submitted for candidate
-            interviews.
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
+            Review and manage feedback submitted for candidate interviews.
           </p>
         </header>
 
@@ -381,11 +381,16 @@ export default function FeedbackPage() {
         {success && <Alert variant="success" className="mb-6">{success}</Alert>}
 
         <section className="mb-10 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-          <h2 className="mb-5 text-xl font-semibold text-slate-900">
-            {editingId !== null ? "Edit Feedback" : "Add Feedback"}
-          </h2>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+              <StarIcon className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              {editingId !== null ? "Edit Feedback" : "Add Feedback"}
+            </h2>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="mt-5 grid gap-4 sm:grid-cols-2">
             <Select
               label="Interview"
               value={interviewId}
@@ -423,9 +428,10 @@ export default function FeedbackPage() {
               onChange={(event) => setComments(event.target.value)}
               rows={4}
               placeholder="Enter interview feedback..."
+              className="sm:col-span-2"
             />
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 sm:col-span-2">
               <Button
                 type="submit"
                 variant="primary"
@@ -458,26 +464,20 @@ export default function FeedbackPage() {
           </h2>
 
           {loading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="h-28 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
-                >
-                  <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
-                  <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
-                  <div className="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-200" />
-                </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: Math.min(PAGE_SIZE, 6) }).map((_, index) => (
+                <CardSkeleton key={index} lines={3} />
               ))}
             </div>
           ) : feedback.length === 0 ? (
             <EmptyState
-              icon={<DocumentTextIcon />}
+              icon={<DocumentTextIcon className="h-7 w-7" />}
               title="No feedback found"
               description="Add feedback using the form above."
+              tone="blue"
             />
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {visibleFeedback.map((item) => {
                 const interview = interviews.find(
                   (interviewItem) =>
@@ -487,66 +487,78 @@ export default function FeedbackPage() {
                 return (
                   <article
                     key={item.id}
-                    className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
+                    className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                   >
-                    <div className="flex flex-col justify-between gap-5 md:flex-row md:items-start">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <h3 className="text-lg font-semibold text-slate-900">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="truncate text-lg font-semibold text-slate-900">
                             Feedback #{item.id}
                           </h3>
-                          <Badge color={getRatingColor(item.rating)} className="w-fit">
+                          <Badge color={getRatingColor(item.rating)} className="shrink-0">
                             {item.rating}/5
                           </Badge>
                         </div>
+                      </div>
+                    </div>
 
-                        <p className="mt-3 text-sm text-slate-600">
-                          <span className="font-medium">Interview:</span>{" "}
-                          #{item.interviewId}
-                        </p>
-
-                        {interview && (
-                          <p className="mt-1 text-sm text-slate-600">
-                            <span className="font-medium">Candidate:</span>{" "}
-                            {getCandidateName(interview.candidateId)}
-                          </p>
-                        )}
-
-                        <div className="mt-3">
-                          <RatingStars rating={item.rating} />
-                        </div>
-
-                        {item.comments && (
-                          <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600">
-                            {item.comments}
-                          </p>
-                        )}
+                    <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <CalendarIcon className="h-4 w-4 text-cyan-500" />
+                        <span className="font-medium">Interview #{item.interviewId}</span>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => startEditing(item)}
-                        >
-                          Edit
-                        </Button>
-
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          isLoading={deletingId === item.id}
-                          disabled={deletingId === item.id}
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          {deletingId === item.id ? "Deleting…" : "Delete"}
-                        </Button>
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <UserIcon className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">{interview ? getCandidateName(interview.candidateId) : `Candidate #${item.interviewId}`}</span>
                       </div>
+                    </div>
+
+                    {interview && (
+                      <p className="mt-2 text-xs text-slate-400">
+                        <ClockIcon className="mr-1 inline h-3.5 w-3.5" />
+                        {new Date(interview.scheduledAt).toLocaleString()}
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-500">Rating:</span>
+                      <RatingStars rating={item.rating} />
+                    </div>
+
+                    {item.comments && (
+                      <p className="mt-3 whitespace-pre-wrap text-sm text-slate-600 leading-relaxed">
+                        {item.comments}
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => startEditing(item)}
+                      >
+                        Edit
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        isLoading={deletingId === item.id}
+                        disabled={deletingId === item.id}
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        {deletingId === item.id ? "Deleting…" : "Delete"}
+                      </Button>
                     </div>
                   </article>
                 );
               })}
+            </div>
+          )}
 
+          {!loading && feedback.length > 0 && (
+            <div className="mt-8">
               <Pagination
                 page={currentPage}
                 totalPages={totalPages}

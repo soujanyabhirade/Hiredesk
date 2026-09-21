@@ -6,6 +6,8 @@ import { apiFetch } from "@/lib/api-client";
 import { Alert } from "@/app/components/ui/Alert";
 import { Button } from "@/app/components/ui/Button";
 import { Badge } from "@/app/components/ui/Badge";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
+import { ClockIcon, CalendarIcon } from "@/app/components/ui/Icons";
 
 interface Candidate {
   id: number;
@@ -29,6 +31,15 @@ interface CandidatesResponse {
   total: number;
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 export default function InterviewDetailsPage() {
   const params = useParams();
   const id = params.id;
@@ -38,6 +49,12 @@ export default function InterviewDetailsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  function getInterviewStatusColor(interviewStatus: string) {
+    if (interviewStatus === "COMPLETED") return "green";
+    if (interviewStatus === "CANCELLED") return "red";
+    return "blue";
+  }
 
   useEffect(() => {
     async function loadInterview() {
@@ -96,18 +113,15 @@ export default function InterviewDetailsPage() {
     }
   }, [id]);
 
-  function getInterviewStatusColor(interviewStatus: string) {
-    if (interviewStatus === "COMPLETED") return "green";
-    if (interviewStatus === "CANCELLED") return "red";
-    return "blue";
-  }
-
   if (loading) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-slate-600">Loading interview…</p>
+          <CardSkeleton lines={2} />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} lines={2} />
+            ))}
           </div>
         </div>
       </main>
@@ -116,41 +130,59 @@ export default function InterviewDetailsPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <Alert variant="error" className="rounded-xl">
-            {error}
-          </Alert>
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Unable to load interview
+            </h1>
 
-          <Button variant="ghost" size="sm" href="/interviews" className="mt-4">
-            ← Back to Interviews
-          </Button>
+            <Alert variant="error" className="mt-4">
+              {error}
+            </Alert>
+
+            <Button variant="primary" href="/interviews" className="mt-6">
+              Back to Interviews
+            </Button>
+          </div>
         </div>
       </main>
     );
   }
 
   if (!interview) {
-    return null;
+    return (
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Interview not found
+            </h1>
+
+            <Button variant="primary" href="/interviews" className="mt-6">
+              Back to Interviews
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-3xl px-4">
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" href="/interviews">
-            ← Back to Interviews
-          </Button>
-        </div>
+        <Button variant="ghost" size="sm" href="/interviews">
+          ← Back to Interviews
+        </Button>
 
-        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div className="mt-6 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
-              <p className="text-sm font-medium text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
                 Interview #{interview.id}
               </p>
 
-              <h1 className="mt-1 text-3xl font-bold text-slate-900">
+              <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
                 Interview Details
               </h1>
             </div>
@@ -163,58 +195,80 @@ export default function InterviewDetailsPage() {
             </Badge>
           </div>
 
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+              <p className="text-sm font-medium text-slate-500">
                 Candidate
-              </h2>
-
+              </p>
               {candidate ? (
-                <div className="mt-2 rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50">
-                  <p className="text-lg font-semibold text-slate-900">
-                    {candidate.name}
-                  </p>
-                  <p className="text-slate-600">{candidate.email}</p>
-                  {candidate.phone && (
-                    <p className="text-slate-600">{candidate.phone}</p>
-                  )}
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                    {getInitials(candidate.name)}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {candidate.name}
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      {candidate.email}
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <p className="mt-2 text-slate-600">
+                <p className="mt-2 font-semibold text-slate-900">
                   Candidate #{interview.candidateId}
                 </p>
               )}
             </div>
 
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Scheduled Date & Time
-              </h2>
-              <p className="mt-2 text-slate-900">
-                {new Date(interview.scheduledAt).toLocaleString()}
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+              <p className="text-sm font-medium text-slate-500">
+                Scheduled Date &amp; Time
+              </p>
+              <div className="mt-2 flex items-center gap-1.5">
+                <CalendarIcon className="h-4 w-4 text-cyan-500" />
+                <p className="font-semibold text-slate-900">
+                  {new Date(interview.scheduledAt).toLocaleDateString()}
+                </p>
+              </div>
+              <div className="mt-1 flex items-center gap-1.5">
+                <ClockIcon className="h-4 w-4 text-cyan-500" />
+                <p className="font-semibold text-slate-900">
+                  {new Date(interview.scheduledAt).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+              <p className="text-sm font-medium text-slate-500">
+                Status
+              </p>
+              <p className="mt-2">
+                <Badge
+                  color={getInterviewStatusColor(interview.status)}
+                  className="w-fit"
+                >
+                  {interview.status}
+                </Badge>
               </p>
             </div>
 
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Status
-              </h2>
-              <p className="mt-2 text-slate-900">{interview.status}</p>
-            </div>
-
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
+              <p className="text-sm font-medium text-slate-500">
                 Candidate ID
-              </h2>
-              <p className="mt-2 text-slate-900">
-                {interview.candidateId}
+              </p>
+              <p className="mt-2 font-semibold text-slate-900">
+                #{interview.candidateId}
               </p>
             </div>
           </div>
 
           <div className="mt-8 flex gap-3 border-t border-slate-200 pt-6">
-            <Button variant="ghost" href="/interviews">
-              Back
+            <Button variant="primary" href="/interviews">
+              Back to Interviews
             </Button>
           </div>
         </div>

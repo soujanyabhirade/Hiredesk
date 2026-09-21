@@ -7,6 +7,7 @@ import { Alert } from "@/app/components/ui/Alert";
 import { Button } from "@/app/components/ui/Button";
 import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
 
 type Job = {
   id: number;
@@ -141,10 +142,13 @@ export default function EditCandidatePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-2xl px-4">
-          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-slate-600">Loading candidate…</p>
+          <CardSkeleton lines={2} />
+          <div className="mt-6 space-y-5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardSkeleton key={i} lines={2} />
+            ))}
           </div>
         </div>
       </main>
@@ -153,7 +157,7 @@ export default function EditCandidatePage() {
 
   if (error && !candidate) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-2xl px-4">
           <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -164,7 +168,11 @@ export default function EditCandidatePage() {
               {error}
             </Alert>
 
-            <Button variant="primary" href={`/candidates/${candidateId}`} className="mt-6">
+            <Button
+              variant="primary"
+              href={`/candidates/${candidateId}`}
+              className="mt-6"
+            >
               Back to Candidate
             </Button>
           </div>
@@ -174,22 +182,22 @@ export default function EditCandidatePage() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-2xl px-4">
         <Button variant="ghost" size="sm" href={`/candidates/${candidateId}`}>
           ← Back to Candidate
         </Button>
 
-        <div className="mt-5 rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+        <div className="mt-5 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
             Candidate
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
             Edit Candidate
           </h1>
 
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-base text-slate-500">
             Update the candidate&apos;s information.
           </p>
 

@@ -8,7 +8,8 @@ import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Pagination } from "@/app/components/Pagination";
-import { DocumentTextIcon } from "@/app/components/ui/Icons";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
+import { UserIcon, BriefcaseIcon } from "@/app/components/ui/Icons";
 
 type Candidate = {
   id: number;
@@ -44,6 +45,15 @@ type JobsResponse = {
   sort: string;
   total: number;
 };
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -296,19 +306,19 @@ export default function CandidatesPage() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-6xl px-4">
-        <header className="mb-10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+        <header className="mb-8 sm:mb-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
             HireDesk
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Candidates
           </h1>
 
-          <p className="mt-2 max-w-2xl text-slate-600">
-            Manage candidates and their applications.
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
+            Browse, search, and manage your recruitment pipeline.
           </p>
         </header>
 
@@ -316,9 +326,14 @@ export default function CandidatesPage() {
         {success && <Alert variant="success" className="mb-6">{success}</Alert>}
 
         <section className="mb-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Add Candidate
-          </h2>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+              <UserIcon className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Add Candidate
+            </h2>
+          </div>
 
           <form onSubmit={handleCreate} className="mt-5 grid gap-4 md:grid-cols-2">
             <Input
@@ -369,8 +384,17 @@ export default function CandidatesPage() {
           </form>
         </section>
 
-        <section className="mb-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
-          <div className="grid gap-4 md:grid-cols-3">
+        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-500 ring-1 ring-slate-200/50">
+              <BriefcaseIcon className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Search &amp; Filters
+            </h2>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
             <Input
               type="text"
               placeholder="Search by name or email..."
@@ -412,92 +436,98 @@ export default function CandidatesPage() {
         </section>
 
         {loading ? (
-          <div className="space-y-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: limit }).map((_, index) => (
-              <div
-                key={index}
-                className="h-28 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
-              >
-                <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
-                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
-                <div className="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-200" />
-              </div>
+              <CardSkeleton key={index} lines={3} />
             ))}
           </div>
         ) : candidates.length === 0 ? (
           <EmptyState
-            icon={<DocumentTextIcon />}
+            icon={<UserIcon className="h-7 w-7" />}
             title="No candidates found"
             description="Add a candidate using the form above or adjust your search filters."
+            tone="blue"
           />
         ) : (
-          <div className="space-y-4">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {candidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-shadow duration-150 hover:shadow-md"
+                className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
               >
-                <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900">
-                      {candidate.name}
-                    </h2>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                      {getInitials(candidate.name)}
+                    </div>
 
-                    <p className="mt-1 text-sm text-slate-600">
-                      {candidate.email}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      {candidate.phone || "No phone provided"}
-                    </p>
-
-                    <p className="mt-2 text-sm font-medium text-blue-600">
-                      Job #{candidate.jobId}
-                    </p>
+                    <div className="min-w-0">
+                      <h2 className="truncate text-lg font-semibold text-slate-900">
+                        {candidate.name}
+                      </h2>
+                      <p className="truncate text-sm text-slate-500">
+                        {candidate.email}
+                      </p>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      href={`/candidates/${candidate.id}`}
-                    >
-                      View Details
-                    </Button>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200/50">
+                    <BriefcaseIcon className="h-3.5 w-3.5 text-slate-400" />
+                    Job #{candidate.jobId}
+                  </span>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      href={`/candidates/${candidate.id}/edit`}
-                    >
-                      Edit
-                    </Button>
+                  {candidate.phone && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200/50">
+                      {candidate.phone}
+                    </span>
+                  )}
+                </div>
 
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      isLoading={deletingId === candidate.id}
-                      disabled={deletingId === candidate.id}
-                      onClick={() => handleDelete(candidate.id)}
-                    >
-                      {deletingId === candidate.id ? "Deleting…" : "Delete"}
-                    </Button>
-                  </div>
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    href={`/candidates/${candidate.id}`}
+                  >
+                    View Details
+                  </Button>
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    href={`/candidates/${candidate.id}/edit`}
+                  >
+                    Edit
+                  </Button>
+
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    isLoading={deletingId === candidate.id}
+                    disabled={deletingId === candidate.id}
+                    onClick={() => handleDelete(candidate.id)}
+                  >
+                    {deletingId === candidate.id ? "Deleting…" : "Delete"}
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        <div className="mt-8">
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            itemLabel="candidate"
-            onPageChange={setPage}
-          />
-        </div>
+        {!loading && candidates.length > 0 && (
+          <div className="mt-8">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              itemLabel="candidate"
+              onPageChange={setPage}
+            />
+          </div>
+        )}
       </div>
     </main>
   );

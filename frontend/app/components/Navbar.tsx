@@ -68,7 +68,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <Link
           href="/"
-          className="text-xl font-bold text-slate-900 hover:text-blue-600"
+          className="text-xl font-bold text-slate-950 transition-colors duration-150 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           HireDesk
         </Link>
@@ -81,14 +81,14 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900",
+                  "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   active &&
-                    "bg-slate-100 text-slate-900 font-semibold",
+                    "bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 hover:text-blue-800",
                 )}
               >
                 {item.label}
                 {active && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-blue-600" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-blue-600" />
                 )}
               </Link>
             );
@@ -98,14 +98,14 @@ export default function Navbar() {
             <Link
               href="/users"
               className={cn(
-                "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900",
+                "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 isActive("/users") &&
-                  "bg-slate-100 text-slate-900 font-semibold",
+                  "bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 hover:text-blue-800",
               )}
             >
               Users
               {isActive("/users") && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-blue-600" />
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-8 rounded-full bg-blue-600" />
               )}
             </Link>
           )}

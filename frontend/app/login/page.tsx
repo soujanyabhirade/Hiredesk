@@ -64,31 +64,34 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <div className="mb-2 flex justify-center">
-            <span className="text-3xl font-bold text-blue-600">H</span>
-            <span className="text-3xl font-bold text-slate-900">
-              ireDesk
-            </span>
+    <main className="flex w-full flex-1 items-center justify-center bg-canvas px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="mb-6 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg shadow-blue-600/20 ring-1 ring-blue-500/30">
+            H
           </div>
-          <p className="mt-2 text-sm text-slate-600">
-            Sign in to your account to continue
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Sign in to your HireDesk account to continue
           </p>
         </div>
 
-        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-          {error && (
-            <Alert variant="error" className="mb-5">
-              {error}
-            </Alert>
-          )}
-
-          {googleError && (
-            <Alert variant="error" className="mb-5">
-              {googleError}
-            </Alert>
+        <div className="rounded-2xl bg-white p-5 shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 sm:p-8">
+          {(error || googleError) && (
+            <div className="mb-6 space-y-3">
+              {error && (
+                <Alert variant="error" className="rounded-lg">
+                  {error}
+                </Alert>
+              )}
+              {googleError && (
+                <Alert variant="error" className="rounded-lg">
+                  {googleError}
+                </Alert>
+              )}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -101,6 +104,7 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               required
               placeholder="you@example.com"
+              className="h-11"
             />
 
             <Input
@@ -111,7 +115,8 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="Enter your password"
+              className="h-11"
             />
 
             <Button
@@ -119,13 +124,13 @@ export default function LoginPage() {
               variant="primary"
               isLoading={loading}
               disabled={loading}
-              className="w-full"
+              className="h-11 w-full text-base shadow-sm shadow-blue-600/20 transition-shadow duration-150 hover:shadow-md"
             >
               {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
 
-          <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
+          <div className="my-7 flex items-center gap-3 text-xs font-medium text-slate-400">
             <span className="h-px flex-1 bg-slate-200" />
             <span>or continue with</span>
             <span className="h-px flex-1 bg-slate-200" />
@@ -133,12 +138,12 @@ export default function LoginPage() {
 
           <a
             href="/api/auth/google"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors duration-150 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:ring-offset-1"
+            className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-150 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+            aria-label="Sign in with Google"
           >
             <svg
+              className="h-5 w-5 shrink-0"
               viewBox="0 0 24 24"
-              width={18}
-              height={18}
               fill="none"
               aria-hidden="true"
             >
@@ -159,7 +164,7 @@ export default function LoginPage() {
                 d="M12 5.25c1.43 0 2.7.56 3.65 1.48l.02.02 2.85-2.85c-.02-.01-6.52-1.48-6.52-1.48S5.54 4.22 5.54 4.22l2.85 2.85C9.3 6.91 10.57 5.25 12 5.25z"
               />
             </svg>
-            Sign in with Google
+            <span>Sign in with Google</span>
           </a>
         </div>
       </div>

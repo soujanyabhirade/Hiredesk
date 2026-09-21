@@ -10,6 +10,7 @@ import { Select } from "@/app/components/ui/Select";
 import { Badge } from "@/app/components/ui/Badge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Pagination } from "@/app/components/Pagination";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
 import { BriefcaseIcon } from "@/app/components/ui/Icons";
 
 type Job = {
@@ -293,19 +294,19 @@ export default function JobsPage() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-5xl px-4">
         <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
               HireDesk
             </p>
 
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
               Jobs
             </h1>
 
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
               Manage open positions in your hiring pipeline.
             </p>
           </div>
@@ -324,9 +325,17 @@ export default function JobsPage() {
 
         {error && <Alert variant="error" className="mb-6">{error}</Alert>}
 
-        {/* Search, Filter, and Sort */}
         <section className="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-500 ring-1 ring-slate-200/50">
+              <BriefcaseIcon className="h-5 w-5" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
+              Search &amp; Filters
+            </h2>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Input
               id="search"
               label="Search Jobs"
@@ -361,28 +370,17 @@ export default function JobsPage() {
         </section>
 
         {loading ? (
-          <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: limit }).map((_, index) => (
-              <div
-                key={index}
-                className="h-36 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
-              >
-                <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
-                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
-                <div className="mt-3 h-4 w-full animate-pulse rounded bg-slate-200" />
-                <div className="mt-3 h-4 w-3/4 animate-pulse rounded bg-slate-200" />
-                <div className="mt-4 flex gap-2">
-                  <div className="h-8 w-20 animate-pulse rounded-lg bg-slate-200" />
-                  <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-200" />
-                </div>
-              </div>
+              <CardSkeleton key={index} lines={3} />
             ))}
           </div>
         ) : jobs.length === 0 ? (
           <EmptyState
-            icon={<BriefcaseIcon />}
+            icon={<BriefcaseIcon className="h-7 w-7" />}
             title="No jobs found"
             description="No jobs match your current search or filters."
+            tone="indigo"
           />
         ) : (
           <>
@@ -390,71 +388,67 @@ export default function JobsPage() {
               {jobs.map((job) => (
                 <article
                   key={job.id}
-                  className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-shadow duration-150 hover:shadow-md"
+                  className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-semibold text-slate-900">
-                        {job.title}
-                      </h2>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                        <BriefcaseIcon className="h-5 w-5" />
+                      </div>
 
-                      {job.description && (
-                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                          {job.description}
-                        </p>
-                      )}
+                      <div className="min-w-0">
+                        <h2 className="truncate text-lg font-semibold text-slate-900">
+                          {job.title}
+                        </h2>
 
-                      {job.location && (
-                        <p className="mt-3 flex items-center text-sm text-slate-500">
-                          <span className="mr-1" aria-hidden="true">
-                            📍
-                          </span>
-                          {job.location}
-                        </p>
-                      )}
+                        {job.location && (
+                          <p className="mt-1 text-sm text-slate-500">
+                            {job.location}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <Badge color={getJobStatusColor(job.status)}>
+                    <Badge color={getJobStatusColor(job.status)} className="shrink-0">
                       {job.status}
                     </Badge>
                   </div>
 
-                  <p className="mt-4 text-xs text-slate-400">
-                    Job #{job.id}
-                  </p>
+                  {job.description && (
+                    <p className="mt-3 line-clamp-2 text-sm text-slate-600">
+                      {job.description}
+                    </p>
+                  )}
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      href={`/jobs/${job.id}`}
-                    >
-                      View Details
-                    </Button>
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                    <p className="text-xs text-slate-400">
+                      Job #{job.id}
+                    </p>
 
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      href={`/jobs/${job.id}`}
-                    >
-                      Edit
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        href={`/jobs/${job.id}`}
+                      >
+                        View
+                      </Button>
 
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      isLoading={deletingId === job.id}
-                      disabled={deletingId === job.id}
-                      onClick={() => handleDelete(job)}
-                    >
-                      {deletingId === job.id ? "Deleting…" : "Delete"}
-                    </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        isLoading={deletingId === job.id}
+                        disabled={deletingId === job.id}
+                        onClick={() => handleDelete(job)}
+                      >
+                        {deletingId === job.id ? "Deleting…" : "Delete"}
+                      </Button>
+                    </div>
                   </div>
                 </article>
               ))}
             </div>
 
-            {/* Pagination */}
             <div className="mt-8">
               <Pagination
                 page={page}
@@ -467,7 +461,6 @@ export default function JobsPage() {
           </>
         )}
 
-        {/* Create Job Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
             <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl ring-1 ring-slate-200/50">

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { Alert } from "@/app/components/ui/Alert";
 import { Button } from "@/app/components/ui/Button";
+import { CardSkeleton } from "@/app/components/ui/Skeleton";
 
 type Job = {
   id: number;
@@ -74,10 +75,13 @@ export default function CandidateDetailsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-slate-600">Loading candidate…</p>
+          <CardSkeleton lines={2} />
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CardSkeleton key={i} lines={2} />
+            ))}
           </div>
         </div>
       </main>
@@ -86,7 +90,7 @@ export default function CandidateDetailsPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
           <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -97,11 +101,7 @@ export default function CandidateDetailsPage() {
               {error}
             </Alert>
 
-            <Button
-              variant="primary"
-              href="/"
-              className="mt-6"
-            >
+            <Button variant="primary" href="/" className="mt-6">
               Back to Candidates
             </Button>
           </div>
@@ -112,10 +112,12 @@ export default function CandidateDetailsPage() {
 
   if (!candidate) {
     return (
-      <main className="min-h-screen w-full bg-canvas py-10">
+      <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
         <div className="mx-auto max-w-3xl px-4">
           <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
-            <p className="text-slate-600">Candidate not found.</p>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Candidate not found
+            </h1>
 
             <Button variant="primary" href="/" className="mt-6">
               Back to Candidates
@@ -127,20 +129,20 @@ export default function CandidateDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-3xl px-4">
         <Button variant="ghost" size="sm" href="/">
           ← Back to Candidates
         </Button>
 
-        <div className="mt-5 rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+        <div className="mt-5 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+              <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
                 Candidate Details
               </p>
 
-              <h1 className="mt-2 text-3xl font-bold text-slate-900">
+              <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
                 {candidate.name}
               </h1>
 
@@ -154,8 +156,8 @@ export default function CandidateDetailsPage() {
             </span>
           </div>
 
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 p-5">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Full Name
               </p>
@@ -164,7 +166,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Email
               </p>
@@ -173,7 +175,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Phone
               </p>
@@ -182,7 +184,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Applied Job
               </p>
@@ -197,7 +199,7 @@ export default function CandidateDetailsPage() {
               )}
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Job Status
               </p>
@@ -218,7 +220,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Candidate ID
               </p>
@@ -227,7 +229,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Job ID
               </p>
@@ -236,7 +238,7 @@ export default function CandidateDetailsPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-slate-200 p-5">
+            <div className="rounded-lg bg-slate-50/70 p-5 ring-1 ring-slate-200/50">
               <p className="text-sm font-medium text-slate-500">
                 Created
               </p>

@@ -43,6 +43,29 @@ type DashboardStats = {
   }[];
 };
 
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const color =
+    status === "COMPLETED"
+      ? "green"
+      : status === "CANCELLED"
+        ? "red"
+        : "blue";
+  return (
+    <Badge color={color as "green" | "red" | "blue"} className="w-fit">
+      {status}
+    </Badge>
+  );
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
@@ -85,19 +108,20 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen w-full bg-canvas py-10">
+    <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-7xl px-4">
-        <header className="mb-10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+        <header className="mb-8 sm:mb-10">
+          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600">
             HireDesk
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
             Dashboard
           </h1>
 
-          <p className="mt-2 text-slate-600">
-            Overview of your recruitment activity.
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-slate-500">
+            Overview of your recruitment pipeline, candidates, and upcoming
+            activity.
           </p>
         </header>
 
@@ -126,168 +150,199 @@ export default function DashboardPage() {
                 title="Total Candidates"
                 value={stats.candidates}
                 icon={<UserIcon />}
+                tone="blue"
               />
 
               <StatCard
                 title="Total Jobs"
                 value={stats.jobs}
                 icon={<BriefcaseIcon />}
+                tone="indigo"
               />
 
               <StatCard
                 title="Open Jobs"
                 value={stats.openJobs}
                 icon={<BriefcaseIcon />}
+                tone="emerald"
               />
 
               <StatCard
                 title="Total Interviews"
                 value={stats.interviews}
                 icon={<CalendarIcon />}
+                tone="cyan"
               />
 
               <StatCard
                 title="Scheduled Interviews"
                 value={stats.scheduledInterviews}
                 icon={<ClockIcon />}
+                tone="blue"
               />
 
               <StatCard
                 title="Completed Interviews"
                 value={stats.completedInterviews}
                 icon={<CheckCircleIcon />}
+                tone="emerald"
               />
 
               <StatCard
                 title="Total Feedback"
                 value={stats.feedback}
                 icon={<StarIcon />}
+                tone="amber"
               />
             </section>
 
-            <section className="mt-10 grid gap-8 lg:grid-cols-2">
+            <section className="mt-10 grid gap-6 lg:grid-cols-2">
               <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     Recent Candidates
                   </h2>
 
                   <Link
                     href="/"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="text-sm font-medium text-blue-600 transition-colors duration-150 hover:text-blue-700 hover:underline underline-offset-2"
                   >
                     View all →
                   </Link>
                 </div>
 
-                <div className="mt-5 space-y-4">
+                <div className="mt-5">
                   {stats.recentCandidates.length === 0 ? (
                     <EmptyState
-                      title="No recent candidates"
+                      title="No candidates yet"
                       description="Candidates will appear here once added."
+                      icon={<UserIcon />}
+                      tone="blue"
                     />
                   ) : (
-                    stats.recentCandidates.map((candidate) => (
-                      <div
-                        key={candidate.id}
-                        className="flex items-center justify-between rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50"
-                      >
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            {candidate.name}
-                          </p>
-                          <p className="text-sm text-slate-600">
-                            {candidate.email}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            Added{" "}
-                            {new Date(candidate.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
+                    <ul className="divide-y divide-slate-100">
+                      {stats.recentCandidates.map((candidate, i) => (
+                        <li
+                          key={candidate.id}
+                          className="flex items-center gap-4 py-4 first:pt-0 last:pb-0 transition-colors duration-150 hover:bg-slate-50/80 rounded-lg px-2 -mx-2"
+                          style={{
+                            animationDelay: `${i * 50}ms`,
+                          }}
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                            {getInitials(candidate.name)}
+                          </div>
 
-                        <Link href={`/candidates/${candidate.id}`}>
-                          <Button variant="secondary" size="sm">
-                            View
-                          </Button>
-                        </Link>
-                      </div>
-                    ))
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-slate-900">
+                              {candidate.name}
+                            </p>
+                            <p className="truncate text-xs text-slate-500">
+                              {candidate.email}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              Added{" "}
+                              {new Date(
+                                candidate.createdAt,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+
+                          <Link href={`/candidates/${candidate.id}`}>
+                            <Button variant="secondary" size="sm">
+                              View
+                            </Button>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>
 
               <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     Upcoming Interviews
                   </h2>
 
                   <Link
                     href="/interviews"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                    className="text-sm font-medium text-blue-600 transition-colors duration-150 hover:text-blue-700 hover:underline underline-offset-2"
                   >
                     View all →
                   </Link>
                 </div>
 
-                <div className="mt-5 space-y-4">
+                <div className="mt-5">
                   {stats.upcomingInterviews.length === 0 ? (
                     <EmptyState
                       title="No upcoming interviews"
                       description="Scheduled interviews will appear here."
+                      icon={<CalendarIcon />}
+                      tone="cyan"
                     />
                   ) : (
-                    stats.upcomingInterviews.map((interview) => (
-                      <div
-                        key={interview.id}
-                        className="rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {interview.candidateName}
-                            </p>
-                            <p className="text-sm text-slate-600">
-                              {interview.candidateEmail}
-                            </p>
-                            <p className="mt-2 text-sm text-slate-700">
-                              <span className="font-medium">
-                                Scheduled:
-                              </span>{" "}
-                              {new Date(interview.scheduledAt).toLocaleString()}
-                            </p>
+                    <ul className="divide-y divide-slate-100">
+                      {stats.upcomingInterviews.map((interview, i) => (
+                        <li
+                          key={interview.id}
+                          className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 transition-colors duration-150 hover:bg-slate-50/80 rounded-lg px-2 -mx-2"
+                          style={{
+                            animationDelay: `${i * 50}ms`,
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-slate-900">
+                                {interview.candidateName}
+                              </p>
+                              <p className="truncate text-xs text-slate-500">
+                                {interview.candidateEmail}
+                              </p>
+                            </div>
+                            <StatusBadge status={interview.status} />
                           </div>
 
-                          <Badge
-                            color={
-                              interview.status === "COMPLETED"
-                                ? "green"
-                                : interview.status === "CANCELLED"
-                                  ? "red"
-                                  : "blue"
-                            }
-                            className="w-fit"
-                          >
-                            {interview.status}
-                          </Badge>
-                        </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <CalendarIcon className="h-3.5 w-3.5 text-slate-400" />
+                              <span>
+                                {new Date(
+                                  interview.scheduledAt,
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                              <ClockIcon className="h-3.5 w-3.5 text-slate-400" />
+                              <span>
+                                {new Date(
+                                  interview.scheduledAt,
+                                ).toLocaleTimeString([], {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                          </div>
 
-                        <div className="mt-3">
-                          <Link href={`/interviews/${interview.id}`}>
-                            <Button variant="secondary" size="sm">
-                              View Details
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    ))
+                          <div className="pt-1">
+                            <Link href={`/interviews/${interview.id}`}>
+                              <Button variant="secondary" size="sm">
+                                View Details
+                              </Button>
+                            </Link>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
               </div>
             </section>
 
             <section className="mt-10 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
-              <h2 className="text-xl font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900">
                 Quick Actions
               </h2>
 

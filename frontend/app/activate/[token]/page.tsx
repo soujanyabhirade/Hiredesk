@@ -37,39 +37,46 @@ export default function ActivatePage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <div className="mb-2 flex justify-center">
-            <span className="text-3xl font-bold text-blue-600">H</span>
-            <span className="text-3xl font-bold text-slate-900">
-              ireDesk
-            </span>
+    <main className="flex w-full flex-1 items-center justify-center bg-canvas px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="mb-6 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg shadow-blue-600/20 ring-1 ring-blue-500/30">
+            H
           </div>
-          <p className="mt-2 text-sm text-slate-600">
-            Set a password to activate your account
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Activate your account
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Create a secure password to finish setting up your HireDesk account.
           </p>
         </div>
 
-        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+        <div className="rounded-2xl bg-white p-5 shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/60 sm:p-8">
           {error && (
-            <Alert variant="error" className="mb-5">
-              {error}
-            </Alert>
+            <div className="mb-6" role="alert">
+              <Alert variant="error" className="rounded-lg">
+                {error}
+              </Alert>
+            </div>
           )}
 
-          <form onSubmit={activate} className="space-y-5">
+          <form
+            onSubmit={activate}
+            className="space-y-5"
+            aria-label="Account activation"
+          >
             <Input
               id="password"
-              label="Password"
+              label="New password"
               type="password"
               autoComplete="new-password"
               autoFocus
               minLength={6}
-              placeholder="••••••••"
+              placeholder="Create a password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
+              className="h-11"
             />
 
             <Button
@@ -77,18 +84,18 @@ export default function ActivatePage() {
               variant="primary"
               isLoading={saving}
               disabled={saving}
-              className="w-full"
+              className="h-11 w-full text-base shadow-sm shadow-blue-600/20 transition-shadow duration-150 hover:shadow-md"
             >
               {saving ? "Activating…" : "Activate Account"}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 border-t border-slate-100 pt-5 text-center">
             <Link
               href="/login"
-              className="text-sm font-medium text-slate-600 hover:text-blue-600"
+              className="text-sm font-medium text-slate-600 transition-colors duration-150 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
             >
-              ← Back to Login
+              ← Back to login
             </Link>
           </div>
         </div>
