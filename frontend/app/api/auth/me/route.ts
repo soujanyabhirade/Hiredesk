@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BACKEND_URL } from "@/lib/backend";
+
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
