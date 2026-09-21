@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
+import { Select } from "@/app/components/ui/Select";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { Pagination } from "@/app/components/Pagination";
+import { DocumentTextIcon } from "@/app/components/ui/Icons";
 
 type Candidate = {
   id: number;
@@ -44,9 +46,7 @@ type JobsResponse = {
 };
 
 export default function CandidatesPage() {
-  const [candidates, setCandidates] =
-    useState<Candidate[]>([]);
-
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
 
   const [page, setPage] = useState(1);
@@ -55,11 +55,9 @@ export default function CandidatesPage() {
   const [total, setTotal] = useState(0);
 
   const [search, setSearch] = useState("");
-  const [jobFilter, setJobFilter] =
-    useState("");
+  const [jobFilter, setJobFilter] = useState("");
 
-  const [sort, setSort] =
-    useState("newest");
+  const [sort, setSort] = useState("newest");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -67,18 +65,14 @@ export default function CandidatesPage() {
   const [jobId, setJobId] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [loadingJobs, setLoadingJobs] =
-    useState(true);
+  const [loadingJobs, setLoadingJobs] = useState(true);
 
-  const [creating, setCreating] =
-    useState(false);
+  const [creating, setCreating] = useState(false);
 
-  const [deletingId, setDeletingId] =
-    useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const [error, setError] = useState("");
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
   const loadCandidates = useCallback(async function loadCandidates() {
     try {
@@ -96,7 +90,7 @@ export default function CandidatesPage() {
         params.set("jobId", jobFilter);
       }
 
-        const response = await apiFetch(
+      const response = await apiFetch(
         `/candidates?${params.toString()}`,
         {
           cache: "no-store",
@@ -117,8 +111,7 @@ export default function CandidatesPage() {
         );
       }
 
-      const data: CandidatesResponse =
-        await response.json();
+      const data: CandidatesResponse = await response.json();
 
       setCandidates(data.data);
       setTotal(data.total);
@@ -126,9 +119,7 @@ export default function CandidatesPage() {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError(
-          "Could not load candidates.",
-        );
+        setError("Could not load candidates.");
       }
     } finally {
       setLoading(false);
@@ -139,12 +130,9 @@ export default function CandidatesPage() {
     try {
       setLoadingJobs(true);
 
-      const response = await apiFetch(
-        "/jobs?limit=50",
-        {
-          cache: "no-store",
-        },
-      );
+      const response = await apiFetch("/jobs?limit=50", {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -186,9 +174,7 @@ export default function CandidatesPage() {
     });
   }, [loadJobs]);
 
-  async function handleCreate(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
@@ -196,21 +182,18 @@ export default function CandidatesPage() {
       setError("");
       setSuccess("");
 
-      const response = await apiFetch(
-        "/candidates",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            jobId: Number(jobId),
-          }),
+      const response = await apiFetch("/candidates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          jobId: Number(jobId),
+        }),
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -225,8 +208,7 @@ export default function CandidatesPage() {
           "Failed to create candidate.";
 
         if (Array.isArray(errorMessage)) {
-          errorMessage =
-            errorMessage.join(", ");
+          errorMessage = errorMessage.join(", ");
         }
 
         throw new Error(errorMessage);
@@ -237,9 +219,7 @@ export default function CandidatesPage() {
       setPhone("");
       setJobId("");
 
-      setSuccess(
-        "Candidate created successfully.",
-      );
+      setSuccess("Candidate created successfully.");
 
       setPage(1);
       await loadCandidates();
@@ -247,9 +227,7 @@ export default function CandidatesPage() {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError(
-          "Could not create candidate.",
-        );
+        setError("Could not create candidate.");
       }
     } finally {
       setCreating(false);
@@ -270,12 +248,9 @@ export default function CandidatesPage() {
       setError("");
       setSuccess("");
 
-      const response = await apiFetch(
-        `/candidates/${id}`,
-        {
-          method: "DELETE",
-        },
-      );
+      const response = await apiFetch(`/candidates/${id}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -292,27 +267,18 @@ export default function CandidatesPage() {
           "Failed to delete candidate.";
 
         if (Array.isArray(errorMessage)) {
-          errorMessage =
-            errorMessage.join(", ");
+          errorMessage = errorMessage.join(", ");
         }
 
         throw new Error(errorMessage);
       }
 
-      setSuccess(
-        "Candidate deleted successfully.",
-      );
+      setSuccess("Candidate deleted successfully.");
 
-      const remainingOnPage =
-        candidates.length - 1;
+      const remainingOnPage = candidates.length - 1;
 
-      if (
-        remainingOnPage === 0 &&
-        page > 1
-      ) {
-        setPage((currentPage) =>
-          currentPage - 1,
-        );
+      if (remainingOnPage === 0 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
       } else {
         await loadCandidates();
       }
@@ -320,24 +286,19 @@ export default function CandidatesPage() {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError(
-          "Could not delete candidate.",
-        );
+        setError("Could not delete candidate.");
       }
     } finally {
       setDeletingId(null);
     }
   }
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(total / limit),
-  );
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8">
+    <main className="min-h-screen w-full bg-canvas py-10">
+      <div className="mx-auto max-w-6xl px-4">
+        <header className="mb-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             HireDesk
           </p>
@@ -346,104 +307,71 @@ export default function CandidatesPage() {
             Candidates
           </h1>
 
-          <p className="mt-2 text-slate-600">
-            Manage candidates and their
-            applications.
+          <p className="mt-2 max-w-2xl text-slate-600">
+            Manage candidates and their applications.
           </p>
-        </div>
+        </header>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        {error && <Alert variant="error" className="mb-6">{error}</Alert>}
+        {success && <Alert variant="success" className="mb-6">{success}</Alert>}
 
-        {success && (
-          <div className="mb-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-            {success}
-          </div>
-        )}
-
-        <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        <section className="mb-8 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
           <h2 className="text-xl font-semibold text-slate-900">
             Add Candidate
           </h2>
 
-          <form
-            onSubmit={handleCreate}
-            className="mt-5 grid gap-4 md:grid-cols-2"
-          >
-            <input
+          <form onSubmit={handleCreate} className="mt-5 grid gap-4 md:grid-cols-2">
+            <Input
               type="text"
               placeholder="Full name"
               value={name}
-              onChange={(event) =>
-                setName(event.target.value)
-              }
+              onChange={(event) => setName(event.target.value)}
               required
-              className="rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
             />
 
-            <input
+            <Input
               type="email"
               placeholder="Email"
               value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
+              onChange={(event) => setEmail(event.target.value)}
               required
-              className="rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
             />
 
-            <input
+            <Input
               type="text"
               placeholder="Phone"
               value={phone}
-              onChange={(event) =>
-                setPhone(event.target.value)
-              }
-              className="rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
+              onChange={(event) => setPhone(event.target.value)}
             />
 
-            <select
+            <Select
               value={jobId}
-              onChange={(event) =>
-                setJobId(event.target.value)
-              }
+              onChange={(event) => setJobId(event.target.value)}
               required
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none focus:border-blue-500"
             >
-              <option value="">
-                Select a job
-              </option>
-
+              <option value="">Select a job</option>
               {jobs.map((job) => (
-                <option
-                  key={job.id}
-                  value={job.id}
-                >
+                <option key={job.id} value={job.id}>
                   {job.title}
                 </option>
               ))}
-            </select>
+            </Select>
 
-            <button
+            <Button
               type="submit"
-              disabled={
-                creating || loadingJobs
-              }
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 md:col-span-2"
+              variant="primary"
+              isLoading={creating || loadingJobs}
+              disabled={creating || loadingJobs}
+              className="md:col-span-2"
             >
-              {creating
-                ? "Creating..."
-                : "Add Candidate"}
-            </button>
+              {creating ? "Creating…" : "Add Candidate"}
+            </Button>
           </form>
-        </div>
+        </section>
 
-        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+        <section className="mb-8 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50">
           <div className="grid gap-4 md:grid-cols-3">
-            <input
+            <Input
               type="text"
               placeholder="Search by name or email..."
               value={search}
@@ -451,76 +379,63 @@ export default function CandidatesPage() {
                 setSearch(event.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
             />
 
-            <select
+            <Select
               value={jobFilter}
               onChange={(event) => {
                 setJobFilter(event.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none focus:border-blue-500"
             >
-              <option value="">
-                All Jobs
-              </option>
-
+              <option value="">All Jobs</option>
               {jobs.map((job) => (
-                <option
-                  key={job.id}
-                  value={job.id}
-                >
+                <option key={job.id} value={job.id}>
                   {job.title}
                 </option>
               ))}
-            </select>
+            </Select>
 
-            <select
+            <Select
               value={sort}
               onChange={(event) => {
                 setSort(event.target.value);
                 setPage(1);
               }}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none focus:border-blue-500"
             >
-              <option value="newest">
-                Newest
-              </option>
-
-              <option value="name">
-                Name A-Z
-              </option>
-
-              <option value="email">
-                Email A-Z
-              </option>
-
-              <option value="jobId">
-                Job ID
-              </option>
-            </select>
+              <option value="newest">Newest</option>
+              <option value="name">Name A-Z</option>
+              <option value="email">Email A-Z</option>
+              <option value="jobId">Job ID</option>
+            </Select>
           </div>
-        </div>
+        </section>
 
         {loading ? (
-          <div className="rounded-xl bg-white p-8 shadow-sm">
-            <p className="text-slate-600">
-              Loading candidates...
-            </p>
+          <div className="space-y-4">
+            {Array.from({ length: limit }).map((_, index) => (
+              <div
+                key={index}
+                className="h-28 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
+              >
+                <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+                <div className="mt-2 h-4 w-1/3 animate-pulse rounded bg-slate-200" />
+              </div>
+            ))}
           </div>
         ) : candidates.length === 0 ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            <p className="text-slate-600">
-              No candidates found.
-            </p>
-          </div>
+          <EmptyState
+            icon={<DocumentTextIcon />}
+            title="No candidates found"
+            description="Add a candidate using the form above or adjust your search filters."
+          />
         ) : (
           <div className="space-y-4">
             {candidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className="rounded-xl bg-white p-6 shadow-sm"
+                className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-shadow duration-150 hover:shadow-md"
               >
                 <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
                   <div>
@@ -533,8 +448,7 @@ export default function CandidatesPage() {
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {candidate.phone ||
-                        "No phone provided"}
+                      {candidate.phone || "No phone provided"}
                     </p>
 
                     <p className="mt-2 text-sm font-medium text-blue-600">
@@ -543,38 +457,31 @@ export default function CandidatesPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    <Link
+                    <Button
+                      variant="primary"
+                      size="sm"
                       href={`/candidates/${candidate.id}`}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       View Details
-                    </Link>
+                    </Button>
 
-                    <Link
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       href={`/candidates/${candidate.id}/edit`}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                     >
                       Edit
-                    </Link>
+                    </Button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleDelete(
-                          candidate.id,
-                        )
-                      }
-                      disabled={
-                        deletingId ===
-                        candidate.id
-                      }
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      isLoading={deletingId === candidate.id}
+                      disabled={deletingId === candidate.id}
+                      onClick={() => handleDelete(candidate.id)}
                     >
-                      {deletingId ===
-                      candidate.id
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
+                      {deletingId === candidate.id ? "Deleting…" : "Delete"}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -582,45 +489,14 @@ export default function CandidatesPage() {
           </div>
         )}
 
-        <div className="mt-8 flex items-center justify-between rounded-xl bg-white p-5 shadow-sm">
-          <button
-            type="button"
-            disabled={page === 1 || loading}
-            onClick={() =>
-              setPage((currentPage) =>
-                currentPage - 1,
-              )
-            }
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            ← Previous
-          </button>
-
-          <p className="text-sm text-slate-600">
-            Page{" "}
-            <span className="font-semibold text-slate-900">
-              {page}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-slate-900">
-              {totalPages}
-            </span>
-          </p>
-
-          <button
-            type="button"
-            disabled={
-              page >= totalPages || loading
-            }
-            onClick={() =>
-              setPage((currentPage) =>
-                currentPage + 1,
-              )
-            }
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next →
-          </button>
+        <div className="mt-8">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            itemLabel="candidate"
+            onPageChange={setPage}
+          />
         </div>
       </div>
     </main>

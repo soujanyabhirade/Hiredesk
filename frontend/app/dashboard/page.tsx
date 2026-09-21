@@ -3,6 +3,19 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { StatCard } from "@/app/components/ui/StatCard";
+import { Badge } from "@/app/components/ui/Badge";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import {
+  UserIcon,
+  BriefcaseIcon,
+  CalendarIcon,
+  StarIcon,
+  ClockIcon,
+  CheckCircleIcon,
+} from "@/app/components/ui/Icons";
 
 type DashboardStats = {
   candidates: number;
@@ -31,8 +44,7 @@ type DashboardStats = {
 };
 
 export default function DashboardPage() {
-  const [stats, setStats] =
-    useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,12 +55,9 @@ export default function DashboardPage() {
         setLoading(true);
         setError("");
 
-        const response = await apiFetch(
-          "/dashboard",
-          {
-            cache: "no-store",
-          },
-        );
+        const response = await apiFetch("/dashboard", {
+          cache: "no-store",
+        });
 
         const data: DashboardStats & { message?: string } =
           await response.json();
@@ -76,9 +85,9 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-8">
+    <main className="min-h-screen w-full bg-canvas py-10">
+      <div className="mx-auto max-w-7xl px-4">
+        <header className="mb-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             HireDesk
           </p>
@@ -93,14 +102,22 @@ export default function DashboardPage() {
         </header>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+          <Alert variant="error" className="mb-6">
             {error}
-          </div>
+          </Alert>
         )}
 
         {loading ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            Loading dashboard...
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-28 rounded-xl bg-white p-6 shadow-sm"
+              >
+                <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+                <div className="mt-4 h-8 w-12 animate-pulse rounded bg-slate-200" />
+              </div>
+            ))}
           </div>
         ) : stats ? (
           <>
@@ -108,45 +125,48 @@ export default function DashboardPage() {
               <StatCard
                 title="Total Candidates"
                 value={stats.candidates}
+                icon={<UserIcon />}
               />
 
               <StatCard
                 title="Total Jobs"
                 value={stats.jobs}
+                icon={<BriefcaseIcon />}
               />
 
               <StatCard
                 title="Open Jobs"
                 value={stats.openJobs}
+                icon={<BriefcaseIcon />}
               />
 
               <StatCard
                 title="Total Interviews"
                 value={stats.interviews}
+                icon={<CalendarIcon />}
               />
 
               <StatCard
                 title="Scheduled Interviews"
-                value={
-                  stats.scheduledInterviews
-                }
+                value={stats.scheduledInterviews}
+                icon={<ClockIcon />}
               />
 
               <StatCard
                 title="Completed Interviews"
-                value={
-                  stats.completedInterviews
-                }
+                value={stats.completedInterviews}
+                icon={<CheckCircleIcon />}
               />
 
               <StatCard
                 title="Total Feedback"
                 value={stats.feedback}
+                icon={<StarIcon />}
               />
             </section>
 
-            <section className="mt-8 grid gap-6 lg:grid-cols-2">
-              <div className="rounded-xl bg-white p-6 shadow-sm">
+            <section className="mt-10 grid gap-8 lg:grid-cols-2">
+              <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-slate-900">
                     Recent Candidates
@@ -154,47 +174,49 @@ export default function DashboardPage() {
 
                   <Link
                     href="/"
-                    className="text-sm font-medium text-blue-600 hover:underline"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
-                    View all
+                    View all →
                   </Link>
                 </div>
 
                 <div className="mt-5 space-y-4">
-                  {stats.recentCandidates.length ===
-                  0 ? (
-                    <p className="text-sm text-slate-500">
-                      No candidates found.
-                    </p>
+                  {stats.recentCandidates.length === 0 ? (
+                    <EmptyState
+                      title="No recent candidates"
+                      description="Candidates will appear here once added."
+                    />
                   ) : (
-                    stats.recentCandidates.map(
-                      (candidate) => (
-                        <div
-                          key={candidate.id}
-                          className="rounded-lg bg-slate-50 p-4"
-                        >
+                    stats.recentCandidates.map((candidate) => (
+                      <div
+                        key={candidate.id}
+                        className="flex items-center justify-between rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50"
+                      >
+                        <div>
                           <p className="font-semibold text-slate-900">
                             {candidate.name}
                           </p>
-
-                          <p className="mt-1 text-sm text-slate-600">
+                          <p className="text-sm text-slate-600">
                             {candidate.email}
                           </p>
-
-                          <p className="mt-2 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-slate-500">
                             Added{" "}
-                            {new Date(
-                              candidate.createdAt,
-                            ).toLocaleDateString()}
+                            {new Date(candidate.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                      ),
-                    )
+
+                        <Link href={`/candidates/${candidate.id}`}>
+                          <Button variant="secondary" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
 
-              <div className="rounded-xl bg-white p-6 shadow-sm">
+              <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-slate-900">
                     Upcoming Interviews
@@ -202,112 +224,94 @@ export default function DashboardPage() {
 
                   <Link
                     href="/interviews"
-                    className="text-sm font-medium text-blue-600 hover:underline"
+                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
-                    View all
+                    View all →
                   </Link>
                 </div>
 
                 <div className="mt-5 space-y-4">
-                  {stats.upcomingInterviews.length ===
-                  0 ? (
-                    <p className="text-sm text-slate-500">
-                      No upcoming interviews.
-                    </p>
+                  {stats.upcomingInterviews.length === 0 ? (
+                    <EmptyState
+                      title="No upcoming interviews"
+                      description="Scheduled interviews will appear here."
+                    />
                   ) : (
-                    stats.upcomingInterviews.map(
-                      (interview) => (
-                        <div
-                          key={interview.id}
-                          className="rounded-lg bg-slate-50 p-4"
-                        >
-                          <p className="font-semibold text-slate-900">
-                            {
-                              interview.candidateName
+                    stats.upcomingInterviews.map((interview) => (
+                      <div
+                        key={interview.id}
+                        className="rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {interview.candidateName}
+                            </p>
+                            <p className="text-sm text-slate-600">
+                              {interview.candidateEmail}
+                            </p>
+                            <p className="mt-2 text-sm text-slate-700">
+                              <span className="font-medium">
+                                Scheduled:
+                              </span>{" "}
+                              {new Date(interview.scheduledAt).toLocaleString()}
+                            </p>
+                          </div>
+
+                          <Badge
+                            color={
+                              interview.status === "COMPLETED"
+                                ? "green"
+                                : interview.status === "CANCELLED"
+                                  ? "red"
+                                  : "blue"
                             }
-                          </p>
-
-                          <p className="mt-1 text-sm text-slate-600">
-                            {
-                              interview.candidateEmail
-                            }
-                          </p>
-
-                          <p className="mt-2 text-sm text-slate-700">
-                            {new Date(
-                              interview.scheduledAt,
-                            ).toLocaleString()}
-                          </p>
-
-                          <span className="mt-2 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            className="w-fit"
+                          >
                             {interview.status}
-                          </span>
+                          </Badge>
                         </div>
-                      ),
-                    )
+
+                        <div className="mt-3">
+                          <Link href={`/interviews/${interview.id}`}>
+                            <Button variant="secondary" size="sm">
+                              View Details
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
               </div>
             </section>
 
-            <section className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+            <section className="mt-10 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
               <h2 className="text-xl font-semibold text-slate-900">
                 Quick Actions
               </h2>
 
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link
-                  href="/"
-                  className="rounded-lg bg-blue-600 px-5 py-2 font-medium text-white hover:bg-blue-700"
-                >
+                <Button variant="primary" href="/">
                   Candidates
-                </Link>
+                </Button>
 
-                <Link
-                  href="/jobs"
-                  className="rounded-lg bg-slate-800 px-5 py-2 font-medium text-white hover:bg-slate-900"
-                >
+                <Button variant="primary" href="/jobs">
                   Jobs
-                </Link>
+                </Button>
 
-                <Link
-                  href="/interviews"
-                  className="rounded-lg bg-slate-800 px-5 py-2 font-medium text-white hover:bg-slate-900"
-                >
+                <Button variant="primary" href="/interviews">
                   Interviews
-                </Link>
+                </Button>
 
-                <Link
-                  href="/feedback"
-                  className="rounded-lg bg-slate-800 px-5 py-2 font-medium text-white hover:bg-slate-900"
-                >
+                <Button variant="primary" href="/feedback">
                   Feedback
-                </Link>
+                </Button>
               </div>
             </section>
           </>
         ) : null}
       </div>
     </main>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl bg-white p-6 shadow-sm">
-      <p className="text-sm font-medium text-slate-500">
-        {title}
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-slate-900">
-        {value}
-      </p>
-    </div>
   );
 }

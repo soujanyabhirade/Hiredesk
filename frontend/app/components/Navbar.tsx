@@ -1,29 +1,56 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { authFetch, initializeAuth } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+
+type NavItem = {
+  label: string;
+  href: string;
+};
+
+const navItems: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Candidates", href: "/" },
+  { label: "Jobs", href: "/jobs" },
+  { label: "Interviews", href: "/interviews" },
+  { label: "Feedback", href: "/feedback" },
+];
 
 export default function Navbar() {
-  const [loggingOut, setLoggingOut] =
-    useState(false);
+  const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     initializeAuth()
-      .then(() => authFetch("/api/auth/me", {
-        cache: "no-store",
-        skipAuthRefresh: true,
-      }))
-      .then((response) => response.ok ? response.json<{ role: string }>() : null)
-      .then((user) => setIsAdmin(user?.role === "ADMIN"))
-      .catch(() => setIsAdmin(false));
+      .then(() =>
+        authFetch("/api/auth/me", {
+          cache: "no-store",
+          skipAuthRefresh: true,
+        }),
+      )
+      .then((response) =>
+        response.ok
+          ? response.json<{ role: string; name?: string }>()
+          : null,
+      )
+      .then((user) => {
+        setIsAdmin(user?.role === "ADMIN");
+        setReady(true);
+      })
+      .catch(() => {
+        setIsAdmin(false);
+        setReady(true);
+      });
   }, []);
 
   async function handleLogout() {
     try {
       setLoggingOut(true);
-
       await authFetch("/api/auth/logout", {
         method: "POST",
         skipAuthRefresh: true,
@@ -33,70 +60,63 @@ export default function Navbar() {
     }
   }
 
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
   return (
-    <nav className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <nav className="border-b border-slate-200 bg-white shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <Link
           href="/"
-          className="text-xl font-bold text-blue-600"
+          className="text-xl font-bold text-slate-900 hover:text-blue-600"
         >
           HireDesk
         </Link>
 
-        <div className="flex items-center gap-6">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-slate-700 hover:text-blue-600"
-          >
-            Dashboard
-          </Link>
-
-          <Link
-            href="/"
-            className="text-sm font-medium text-slate-700 hover:text-blue-600"
-          >
-            Candidates
-          </Link>
-
-          <Link
-            href="/jobs"
-            className="text-sm font-medium text-slate-700 hover:text-blue-600"
-          >
-            Jobs
-          </Link>
-
-          <Link
-            href="/interviews"
-            className="text-sm font-medium text-slate-700 hover:text-blue-600"
-          >
-            Interviews
-          </Link>
-
-          <Link
-            href="/feedback"
-            className="text-sm font-medium text-slate-700 hover:text-blue-600"
-          >
-            Feedback
-          </Link>
+        <div className="flex items-center gap-2">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900",
+                  active &&
+                    "bg-slate-100 text-slate-900 font-semibold",
+                )}
+              >
+                {item.label}
+                {active && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-blue-600" />
+                )}
+              </Link>
+            );
+          })}
 
           {isAdmin && (
             <Link
               href="/users"
-              className="text-sm font-medium text-slate-700 hover:text-blue-600"
+              className={cn(
+                "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-50 hover:text-slate-900",
+                isActive("/users") &&
+                  "bg-slate-100 text-slate-900 font-semibold",
+              )}
             >
               Users
+              {isActive("/users") && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-blue-600" />
+              )}
             </Link>
           )}
 
           <button
             type="button"
             onClick={handleLogout}
-            disabled={loggingOut}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={loggingOut || !ready}
+            className="ml-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loggingOut
-              ? "Logging out..."
-              : "Logout"}
+            {loggingOut ? "Logging out…" : "Logout"}
           </button>
         </div>
       </div>

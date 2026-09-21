@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
+import { Select } from "@/app/components/ui/Select";
 
 type Job = {
   id: number;
@@ -28,8 +31,7 @@ export default function EditCandidatePage() {
 
   const candidateId = params.id as string;
 
-  const [candidate, setCandidate] =
-    useState<Candidate | null>(null);
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
 
   const [jobs, setJobs] = useState<Job[]>([]);
 
@@ -48,61 +50,44 @@ export default function EditCandidatePage() {
         setLoading(true);
         setError("");
 
-        const candidateResponse =
-          await apiFetch(`/candidates/${candidateId}`);
+        const candidateResponse = await apiFetch(
+          `/candidates/${candidateId}`,
+        );
 
         if (!candidateResponse.ok) {
           if (candidateResponse.status === 404) {
-            throw new Error(
-              "Candidate not found.",
-            );
+            throw new Error("Candidate not found.");
           }
 
           if (candidateResponse.status === 401) {
-            throw new Error(
-              "You are not authenticated. Please log in again.",
-            );
+            throw new Error("You are not authenticated. Please log in again.");
           }
 
-          throw new Error(
-            "Failed to load candidate.",
-          );
+          throw new Error("Failed to load candidate.");
         }
 
-        const candidateData: Candidate =
-          await candidateResponse.json();
+        const candidateData: Candidate = await candidateResponse.json();
 
-        const jobsResponse = await apiFetch(
-          "/jobs?limit=50",
-        );
+        const jobsResponse = await apiFetch("/jobs?limit=50");
 
         if (!jobsResponse.ok) {
-          throw new Error(
-            "Failed to load jobs.",
-          );
+          throw new Error("Failed to load jobs.");
         }
 
-        const jobsData: JobsResponse =
-          await jobsResponse.json();
+        const jobsData: JobsResponse = await jobsResponse.json();
 
         setCandidate(candidateData);
         setJobs(jobsData.data || []);
 
         setName(candidateData.name);
         setEmail(candidateData.email);
-        setPhone(
-          candidateData.phone || "",
-        );
-        setJobId(
-          String(candidateData.jobId),
-        );
+        setPhone(candidateData.phone || "");
+        setJobId(String(candidateData.jobId));
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message);
         } else {
-          setError(
-            "Could not load candidate.",
-          );
+          setError("Could not load candidate.");
         }
       } finally {
         setLoading(false);
@@ -114,53 +99,40 @@ export default function EditCandidatePage() {
     }
   }, [candidateId]);
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     try {
       setSaving(true);
       setError("");
 
-      const response = await apiFetch(
-        `/candidates/${candidateId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            jobId: Number(jobId),
-          }),
+      const response = await apiFetch(`/candidates/${candidateId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          jobId: Number(jobId),
+        }),
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error(
-            "You are not authenticated. Please log in again.",
-          );
+          throw new Error("You are not authenticated. Please log in again.");
         }
 
-        throw new Error(
-          "Failed to update candidate.",
-        );
+        throw new Error("Failed to update candidate.");
       }
 
-      router.push(
-        `/candidates/${candidateId}`,
-      );
+      router.push(`/candidates/${candidateId}`);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
       } else {
-        setError(
-          "Could not update candidate.",
-        );
+        setError("Could not update candidate.");
       }
     } finally {
       setSaving(false);
@@ -169,12 +141,10 @@ export default function EditCandidatePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-100 px-6 py-10">
-        <div className="mx-auto max-w-2xl">
-          <div className="rounded-xl bg-white p-8 shadow-sm">
-            <p className="text-slate-600">
-              Loading candidate...
-            </p>
+      <main className="min-h-screen w-full bg-canvas py-10">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+            <p className="text-slate-600">Loading candidate…</p>
           </div>
         </div>
       </main>
@@ -183,23 +153,20 @@ export default function EditCandidatePage() {
 
   if (error && !candidate) {
     return (
-      <main className="min-h-screen bg-slate-100 px-6 py-10">
-        <div className="mx-auto max-w-2xl">
-          <div className="rounded-xl bg-white p-8 shadow-sm">
+      <main className="min-h-screen w-full bg-canvas py-10">
+        <div className="mx-auto max-w-2xl px-4">
+          <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
             <h1 className="text-2xl font-bold text-slate-900">
               Unable to load candidate
             </h1>
 
-            <p className="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            <Alert variant="error" className="mt-4">
               {error}
-            </p>
+            </Alert>
 
-            <Link
-              href={`/candidates/${candidateId}`}
-              className="mt-6 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
+            <Button variant="primary" href={`/candidates/${candidateId}`} className="mt-6">
               Back to Candidate
-            </Link>
+            </Button>
           </div>
         </div>
       </main>
@@ -207,16 +174,13 @@ export default function EditCandidatePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-2xl">
-        <Link
-          href={`/candidates/${candidateId}`}
-          className="text-sm font-medium text-blue-600 hover:text-blue-700"
-        >
+    <main className="min-h-screen w-full bg-canvas py-10">
+      <div className="mx-auto max-w-2xl px-4">
+        <Button variant="ghost" size="sm" href={`/candidates/${candidateId}`}>
           ← Back to Candidate
-        </Link>
+        </Button>
 
-        <div className="mt-5 rounded-xl bg-white p-8 shadow-sm">
+        <div className="mt-5 rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             Candidate
           </p>
@@ -229,124 +193,67 @@ export default function EditCandidatePage() {
             Update the candidate&apos;s information.
           </p>
 
-          {error && (
-            <p className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
-            </p>
-          )}
+          {error && <Alert variant="error" className="mt-5">{error}</Alert>}
 
-          <form
-            onSubmit={handleSubmit}
-            className="mt-8 space-y-5"
-          >
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Full Name
-              </label>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <Input
+              id="name"
+              label="Full Name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+            />
 
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(event) =>
-                  setName(event.target.value)
-                }
-                required
-                className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
-              />
-            </div>
+            <Input
+              id="email"
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Email
-              </label>
+            <Input
+              id="phone"
+              label="Phone"
+              type="text"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
 
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
-                required
-                className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Phone
-              </label>
-
-              <input
-                id="phone"
-                type="text"
-                value={phone}
-                onChange={(event) =>
-                  setPhone(event.target.value)
-                }
-                className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="job"
-                className="block text-sm font-medium text-slate-700"
-              >
-                Applied Job
-              </label>
-
-              <select
-                id="job"
-                value={jobId}
-                onChange={(event) =>
-                  setJobId(event.target.value)
-                }
-                required
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none focus:border-blue-500"
-              >
-                <option value="">
-                  Select a job
+            <Select
+              id="job"
+              label="Applied Job"
+              value={jobId}
+              onChange={(event) => setJobId(event.target.value)}
+              required
+            >
+              <option value="">Select a job</option>
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
                 </option>
-
-                {jobs.map((job) => (
-                  <option
-                    key={job.id}
-                    value={job.id}
-                  >
-                    {job.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+              ))}
+            </Select>
 
             <div className="flex gap-3 pt-4">
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                isLoading={saving}
                 disabled={saving}
-                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving
-                  ? "Saving..."
-                  : "Save Changes"}
-              </button>
+                {saving ? "Saving…" : "Save Changes"}
+              </Button>
 
-              <Link
+              <Button
+                type="button"
+                variant="secondary"
                 href={`/candidates/${candidateId}`}
-                className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Cancel
-              </Link>
+              </Button>
             </div>
           </form>
         </div>

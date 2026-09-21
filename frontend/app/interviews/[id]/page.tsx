@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { apiFetch } from '@/lib/api-client';
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { Badge } from "@/app/components/ui/Badge";
 
 interface Candidate {
   id: number;
@@ -31,24 +33,19 @@ export default function InterviewDetailsPage() {
   const params = useParams();
   const id = params.id;
 
-  const [interview, setInterview] =
-    useState<Interview | null>(null);
-
-  const [candidate, setCandidate] =
-    useState<Candidate | null>(null);
+  const [interview, setInterview] = useState<Interview | null>(null);
+  const [candidate, setCandidate] = useState<Candidate | null>(null);
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadInterview() {
       try {
         setLoading(true);
-        setError('');
+        setError("");
 
-        const interviewResponse = await apiFetch(
-          '/interviews',
-        );
+        const interviewResponse = await apiFetch("/interviews");
 
         if (!interviewResponse.ok) {
           const data = await interviewResponse.json<{ message?: string }>().catch(() => null);
@@ -59,46 +56,35 @@ export default function InterviewDetailsPage() {
           );
         }
 
-        const interviews: Interview[] =
-          await interviewResponse.json();
+        const interviews: Interview[] = await interviewResponse.json();
 
-        const foundInterview =
-          interviews.find(
-            (item) => item.id === Number(id),
-          );
+        const foundInterview = interviews.find(
+          (item) => item.id === Number(id),
+        );
 
         if (!foundInterview) {
-          throw new Error(
-            `Interview with id ${id} not found.`,
-          );
+          throw new Error(`Interview with id ${id} not found.`);
         }
 
         setInterview(foundInterview);
 
-        const candidateResponse = await apiFetch(
-          '/candidates?limit=50',
-        );
+        const candidateResponse = await apiFetch("/candidates?limit=50");
 
         if (candidateResponse.ok) {
           const candidateData: CandidatesResponse =
             await candidateResponse.json();
 
-          const foundCandidate =
-            candidateData.data.find(
-              (item) =>
-                item.id ===
-                foundInterview.candidateId,
-            );
-
-          setCandidate(
-            foundCandidate || null,
+          const foundCandidate = candidateData.data.find(
+            (item) => item.id === foundInterview.candidateId,
           );
+
+          setCandidate(foundCandidate || null);
         }
       } catch (err) {
         setError(
           err instanceof Error
             ? err.message
-            : 'Failed to load interview',
+            : "Failed to load interview",
         );
       } finally {
         setLoading(false);
@@ -110,11 +96,19 @@ export default function InterviewDetailsPage() {
     }
   }, [id]);
 
+  function getInterviewStatusColor(interviewStatus: string) {
+    if (interviewStatus === "COMPLETED") return "green";
+    if (interviewStatus === "CANCELLED") return "red";
+    return "blue";
+  }
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 p-8">
-        <div className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow">
-          Loading interview...
+      <main className="min-h-screen w-full bg-canvas py-10">
+        <div className="mx-auto max-w-3xl px-4">
+          <div className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
+            <p className="text-slate-600">Loading interview…</p>
+          </div>
         </div>
       </main>
     );
@@ -122,18 +116,15 @@ export default function InterviewDetailsPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen bg-slate-50 p-8">
-        <div className="mx-auto max-w-3xl">
-          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
+      <main className="min-h-screen w-full bg-canvas py-10">
+        <div className="mx-auto max-w-3xl px-4">
+          <Alert variant="error" className="rounded-xl">
             {error}
-          </div>
+          </Alert>
 
-          <Link
-            href="/interviews"
-            className="mt-4 inline-block text-blue-600 hover:underline"
-          >
+          <Button variant="ghost" size="sm" href="/interviews" className="mt-4">
             ← Back to Interviews
-          </Link>
+          </Button>
         </div>
       </main>
     );
@@ -144,18 +135,15 @@ export default function InterviewDetailsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
-      <div className="mx-auto max-w-3xl">
+    <main className="min-h-screen w-full bg-canvas py-10">
+      <div className="mx-auto max-w-3xl px-4">
         <div className="mb-6">
-          <Link
-            href="/interviews"
-            className="text-blue-600 hover:underline"
-          >
+          <Button variant="ghost" size="sm" href="/interviews">
             ← Back to Interviews
-          </Link>
+          </Button>
         </div>
 
-        <div className="rounded-xl bg-white p-8 shadow">
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
           <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-start">
             <div>
               <p className="text-sm font-medium text-slate-500">
@@ -167,89 +155,67 @@ export default function InterviewDetailsPage() {
               </h1>
             </div>
 
-            <span
-              className={`inline-block w-fit rounded-full px-4 py-2 text-sm font-semibold ${
-                interview.status === 'COMPLETED'
-                  ? 'bg-green-100 text-green-700'
-                  : interview.status ===
-                      'CANCELLED'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-blue-100 text-blue-700'
-              }`}
+            <Badge
+              color={getInterviewStatusColor(interview.status)}
+              className="w-fit"
             >
               {interview.status}
-            </span>
+            </Badge>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Candidate
               </h2>
 
               {candidate ? (
-                <div className="rounded-lg bg-slate-50 p-4">
+                <div className="mt-2 rounded-lg bg-slate-50 p-4 ring-1 ring-slate-200/50">
                   <p className="text-lg font-semibold text-slate-900">
                     {candidate.name}
                   </p>
-
-                  <p className="text-slate-600">
-                    {candidate.email}
-                  </p>
-
+                  <p className="text-slate-600">{candidate.email}</p>
                   {candidate.phone && (
-                    <p className="text-slate-600">
-                      {candidate.phone}
-                    </p>
+                    <p className="text-slate-600">{candidate.phone}</p>
                   )}
                 </div>
               ) : (
-                <p className="text-slate-600">
+                <p className="mt-2 text-slate-600">
                   Candidate #{interview.candidateId}
                 </p>
               )}
             </div>
 
             <div>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Scheduled Date & Time
               </h2>
-
-              <p className="text-lg text-slate-900">
-                {new Date(
-                  interview.scheduledAt,
-                ).toLocaleString()}
+              <p className="mt-2 text-slate-900">
+                {new Date(interview.scheduledAt).toLocaleString()}
               </p>
             </div>
 
             <div>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Status
               </h2>
-
-              <p className="text-lg text-slate-900">
-                {interview.status}
-              </p>
+              <p className="mt-2 text-slate-900">{interview.status}</p>
             </div>
 
             <div>
-              <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Candidate ID
               </h2>
-
-              <p className="text-lg text-slate-900">
+              <p className="mt-2 text-slate-900">
                 {interview.candidateId}
               </p>
             </div>
           </div>
 
           <div className="mt-8 flex gap-3 border-t border-slate-200 pt-6">
-            <Link
-              href="/interviews"
-              className="rounded-lg bg-slate-200 px-5 py-2 font-medium text-slate-700 hover:bg-slate-300"
-            >
+            <Button variant="ghost" href="/interviews">
               Back
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

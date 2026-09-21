@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiFetch } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
 
 export default function ActivatePage() {
   const { token } = useParams<{ token: string }>();
@@ -33,5 +36,63 @@ export default function ActivatePage() {
     }
   }
 
-  return <main className="flex min-h-screen items-center justify-center bg-slate-100 px-6"><section className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm"><p className="text-sm font-semibold uppercase tracking-wide text-blue-600">HireDesk</p><h1 className="mt-2 text-3xl font-bold text-slate-900">Activate Account</h1><p className="mt-2 text-slate-600">Set a password to activate your account.</p><form onSubmit={activate} className="mt-6 space-y-4"><input required minLength={6} type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" className="w-full rounded-lg border border-slate-300 px-3 py-2" />{error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}<button disabled={saving} className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white disabled:opacity-50">{saving ? "Activating..." : "Activate Account"}</button></form><Link href="/login" className="mt-4 inline-block text-sm text-blue-600 hover:underline">Back to Login</Link></section></main>;
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <div className="mb-2 flex justify-center">
+            <span className="text-3xl font-bold text-blue-600">H</span>
+            <span className="text-3xl font-bold text-slate-900">
+              ireDesk
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-slate-600">
+            Set a password to activate your account
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-white p-8 shadow-sm ring-1 ring-slate-200/50">
+          {error && (
+            <Alert variant="error" className="mb-5">
+              {error}
+            </Alert>
+          )}
+
+          <form onSubmit={activate} className="space-y-5">
+            <Input
+              id="password"
+              label="Password"
+              type="password"
+              autoComplete="new-password"
+              autoFocus
+              minLength={6}
+              placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={saving}
+              disabled={saving}
+              className="w-full"
+            >
+              {saving ? "Activating…" : "Activate Account"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-slate-600 hover:text-blue-600"
+            >
+              ← Back to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }

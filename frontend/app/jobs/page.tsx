@@ -1,12 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { apiFetch, authFetch, initializeAuth } from "@/lib/api-client";
+import { Alert } from "@/app/components/ui/Alert";
+import { Button } from "@/app/components/ui/Button";
+import { Input } from "@/app/components/ui/Input";
+import { Textarea } from "@/app/components/ui/Textarea";
+import { Select } from "@/app/components/ui/Select";
+import { Badge } from "@/app/components/ui/Badge";
+import { EmptyState } from "@/app/components/ui/EmptyState";
+import { Pagination } from "@/app/components/Pagination";
+import { BriefcaseIcon } from "@/app/components/ui/Icons";
 
 type Job = {
   id: number;
@@ -282,10 +286,16 @@ export default function JobsPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
+  function getJobStatusColor(status: string) {
+    if (status === "OPEN") return "green";
+    if (status === "CLOSED") return "slate";
+    return "slate";
+  }
+
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-10">
-      <div className="mx-auto max-w-5xl">
-        <header className="mb-8 flex items-center justify-between">
+    <main className="min-h-screen w-full bg-canvas py-10">
+      <div className="mx-auto max-w-5xl px-4">
+        <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
               HireDesk
@@ -301,119 +311,87 @@ export default function JobsPage() {
           </div>
 
           {canCreateJob && !roleLoading && (
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={openCreateModal}
+              isLoading={creating}
               disabled={creating}
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {creating ? "Creating..." : "+ Post New Job"}
-            </button>
+              + Post New Job
+            </Button>
           )}
         </header>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        {error && <Alert variant="error" className="mb-6">{error}</Alert>}
 
         {/* Search, Filter, and Sort */}
-        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <label
-                htmlFor="search"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Search Jobs
-              </label>
+        <section className="mb-6 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <Input
+              id="search"
+              label="Search Jobs"
+              placeholder="Title, description, location..."
+              value={search}
+              onChange={(event) => handleSearchChange(event.target.value)}
+            />
 
-              <input
-                id="search"
-                type="text"
-                value={search}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="Title, description, location..."
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500"
-              />
-            </div>
+            <Select
+              id="status"
+              label="Filter by Status"
+              value={status}
+              onChange={(event) => handleStatusChange(event.target.value)}
+            >
+              <option value="">All Statuses</option>
+              <option value="OPEN">OPEN</option>
+              <option value="CLOSED">CLOSED</option>
+            </Select>
 
-            <div>
-              <label
-                htmlFor="status"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Filter by Status
-              </label>
-
-              <select
-                id="status"
-                value={status}
-                onChange={(event) => handleStatusChange(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500"
-              >
-                <option value="">
-                  All Statuses
-                </option>
-
-                <option value="OPEN">
-                  OPEN
-                </option>
-
-                <option value="CLOSED">
-                  CLOSED
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="sort"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
-                Sort By
-              </label>
-
-              <select
-                id="sort"
-                value={sort}
-                onChange={(event) => handleSortChange(event.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500"
-              >
-                <option value="newest">
-                  Newest
-                </option>
-
-                <option value="oldest">
-                  Oldest
-                </option>
-
-                <option value="titleAsc">
-                  Title A–Z
-                </option>
-
-                <option value="titleDesc">
-                  Title Z–A
-                </option>
-              </select>
-            </div>
+            <Select
+              id="sort"
+              label="Sort By"
+              value={sort}
+              onChange={(event) => handleSortChange(event.target.value)}
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="titleAsc">Title A–Z</option>
+              <option value="titleDesc">Title Z–A</option>
+            </Select>
           </div>
-        </div>
+        </section>
 
         {loading ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            <p className="font-medium text-slate-600">Loading jobs...</p>
+          <div className="space-y-4">
+            {Array.from({ length: limit }).map((_, index) => (
+              <div
+                key={index}
+                className="h-36 rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50"
+              >
+                <div className="h-5 w-3/4 animate-pulse rounded bg-slate-200" />
+                <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+                <div className="mt-3 h-4 w-full animate-pulse rounded bg-slate-200" />
+                <div className="mt-3 h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+                <div className="mt-4 flex gap-2">
+                  <div className="h-8 w-20 animate-pulse rounded-lg bg-slate-200" />
+                  <div className="h-8 w-16 animate-pulse rounded-lg bg-slate-200" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : jobs.length === 0 ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            <p className="font-medium text-slate-700">No jobs found.</p>
-          </div>
+          <EmptyState
+            icon={<BriefcaseIcon />}
+            title="No jobs found"
+            description="No jobs match your current search or filters."
+          />
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2">
               {jobs.map((job) => (
-                <article key={job.id} className="rounded-xl bg-white p-6 shadow-sm">
+                <article
+                  key={job.id}
+                  className="rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-shadow duration-150 hover:shadow-md"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-xl font-semibold text-slate-900">
@@ -421,93 +399,70 @@ export default function JobsPage() {
                       </h2>
 
                       {job.description && (
-                        <p className="mt-2 text-sm text-slate-600">{job.description}</p>
+                        <p className="mt-2 line-clamp-2 text-sm text-slate-600">
+                          {job.description}
+                        </p>
                       )}
 
                       {job.location && (
-                        <p className="mt-3 text-sm text-slate-500">
-                          📍 {job.location}
+                        <p className="mt-3 flex items-center text-sm text-slate-500">
+                          <span className="mr-1" aria-hidden="true">
+                            📍
+                          </span>
+                          {job.location}
                         </p>
                       )}
                     </div>
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        job.status === "OPEN"
-                          ? "bg-green-50 text-green-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}
-                    >
+                    <Badge color={getJobStatusColor(job.status)}>
                       {job.status}
-                    </span>
+                    </Badge>
                   </div>
 
-                  <p className="mt-4 text-xs text-slate-400">Job #{job.id}</p>
+                  <p className="mt-4 text-xs text-slate-400">
+                    Job #{job.id}
+                  </p>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Link
+                    <Button
+                      variant="primary"
+                      size="sm"
                       href={`/jobs/${job.id}`}
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
                       View Details
-                    </Link>
+                    </Button>
 
-                    <Link
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       href={`/jobs/${job.id}`}
-                      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
                       Edit
-                    </Link>
+                    </Button>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(job)}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      isLoading={deletingId === job.id}
                       disabled={deletingId === job.id}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      onClick={() => handleDelete(job)}
                     >
-                      {deletingId === job.id ? "Deleting..." : "Delete"}
-                    </button>
+                      {deletingId === job.id ? "Deleting…" : "Delete"}
+                    </Button>
                   </div>
                 </article>
               ))}
             </div>
 
             {/* Pagination */}
-            <div className="mt-6 flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm">
-              <div>
-                <p className="text-sm text-slate-500">
-                  Page {page} of{" "}
-                  {totalPages}
-                </p>
-
-                <p className="mt-1 text-xs text-slate-400">
-                  {total} job{total === 1 ? "" : "s"} found
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() =>
-                    setPage((current) => Math.max(1, current - 1))
-                  }
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() =>
-                    setPage((current) => Math.min(totalPages, current + 1))
-                  }
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
+            <div className="mt-8">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                itemLabel="job"
+                onPageChange={setPage}
+              />
             </div>
           </>
         )}
@@ -515,102 +470,101 @@ export default function JobsPage() {
         {/* Create Job Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-            <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl ring-1 ring-slate-200/50">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Post New Job</h2>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  Post New Job
+                </h2>
                 <button
                   type="button"
                   onClick={closeCreateModal}
                   disabled={creating}
-                  className="text-slate-400 hover:text-slate-600"
+                  className="rounded-lg p-1 text-slate-400 hover:text-slate-600 disabled:cursor-not-allowed"
                 >
-                  ✕
+                  <span aria-hidden="true">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width={20}
+                      height={20}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 5l14 14M19 5L5 19" />
+                    </svg>
+                  </span>
+                  <span className="sr-only">Close</span>
                 </button>
               </div>
 
               {createError && (
-                <div className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                <Alert variant="error" className="mt-4">
                   {createError}
-                </div>
+                </Alert>
               )}
 
               {createSuccess && (
-                <div className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+                <Alert variant="success" className="mt-4">
                   {createSuccess}
-                </div>
+                </Alert>
               )}
 
               <form onSubmit={handleCreateJob} className="mt-4 space-y-4">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="mb-1 block text-sm font-medium text-slate-700"
-                  >
-                    Job Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    value={newJobTitle}
-                    onChange={(event) => setNewJobTitle(event.target.value)}
-                    required
-                    maxLength={200}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
-                    placeholder="e.g., Senior Frontend Engineer"
-                  />
-                </div>
+                <Input
+                  id="title"
+                  label="Job Title"
+                  required
+                  maxLength={200}
+                  placeholder="e.g., Senior Frontend Engineer"
+                  value={newJobTitle}
+                  onChange={(event) =>
+                    setNewJobTitle(event.target.value)
+                  }
+                />
 
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="mb-1 block text-sm font-medium text-slate-700"
-                  >
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={newJobDescription}
-                    onChange={(event) => setNewJobDescription(event.target.value)}
-                    rows={4}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
-                    placeholder="Job description, responsibilities, requirements..."
-                  />
-                </div>
+                <Textarea
+                  id="description"
+                  label="Description"
+                  placeholder="Job description, responsibilities, requirements..."
+                  value={newJobDescription}
+                  onChange={(event) =>
+                    setNewJobDescription(event.target.value)
+                  }
+                  rows={4}
+                />
 
-                <div>
-                  <label
-                    htmlFor="location"
-                    className="mb-1 block text-sm font-medium text-slate-700"
-                  >
-                    Location
-                  </label>
-                  <input
-                    id="location"
-                    type="text"
-                    value={newJobLocation}
-                    onChange={(event) => setNewJobLocation(event.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500"
-                    placeholder="e.g., Remote, New York, NY, or San Francisco, CA"
-                  />
-                </div>
+                <Input
+                  id="location"
+                  label="Location"
+                  placeholder="e.g., Remote, New York, NY, or San Francisco, CA"
+                  value={newJobLocation}
+                  onChange={(event) =>
+                    setNewJobLocation(event.target.value)
+                  }
+                />
 
                 <div className="mt-6 flex gap-3">
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
+                    isLoading={creating || !newJobTitle.trim()}
                     disabled={creating || !newJobTitle.trim()}
-                    className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1"
                   >
-                    {creating ? "Posting..." : "Post Job"}
-                  </button>
+                    {creating ? "Posting…" : "Post Job"}
+                  </Button>
 
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={closeCreateModal}
                     disabled={creating}
-                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex-1"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
