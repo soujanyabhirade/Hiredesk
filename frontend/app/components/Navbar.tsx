@@ -68,7 +68,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
         <Link
           href="/"
-          className="text-xl font-bold text-slate-950 transition-colors duration-150 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          className="text-xl font-bold text-slate-950 transition-colors duration-150 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         >
           HireDesk
         </Link>
@@ -81,9 +81,9 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                  "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-950 transition-colors duration-150 hover:bg-slate-100 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   active &&
-                    "bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 hover:text-blue-800",
+                    "bg-blue-50 text-blue-900 font-semibold hover:bg-blue-100 hover:text-blue-950",
                 )}
               >
                 {item.label}
@@ -98,9 +98,9 @@ export default function Navbar() {
             <Link
               href="/users"
               className={cn(
-                "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-800 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                "relative rounded-lg px-4 py-2 text-sm font-medium text-slate-950 transition-colors duration-150 hover:bg-slate-100 hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 isActive("/users") &&
-                  "bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 hover:text-blue-800",
+                  "bg-blue-50 text-blue-900 font-semibold hover:bg-blue-100 hover:text-blue-950",
               )}
             >
               Users
