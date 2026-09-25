@@ -23,6 +23,17 @@ export class CandidatesService {
       );
     }
 
+    const existingCandidate =
+      await db.orm.public.Candidate.first({
+        email: createCandidateDto.email,
+      });
+
+    if (existingCandidate) {
+      throw new ConflictException(
+        `Candidate with email ${createCandidateDto.email} already exists`,
+      );
+    }
+
     return await db.orm.public.Candidate.create({
       name: createCandidateDto.name,
       email: createCandidateDto.email,
