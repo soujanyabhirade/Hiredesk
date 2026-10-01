@@ -334,9 +334,17 @@ name,email,phone,jobId,jobTitle
 ```
 
 * `name` and `email` are required.
-* `jobId` or `jobTitle` is required; `jobTitle` must match an existing job.
+* `jobId` or `jobTitle` is required.
 * `phone` is optional and may be left empty.
 * `jobId` and `jobTitle` must not disagree on the same row.
+* A `jobId` must already exist. If it does not, the row is reported as
+  invalid and nothing is created from the title.
+* A `jobTitle` that no job uses yet is created as a new job through the
+  normal job creation rules, with only the title filled in. Several rows
+  with the same new title share one job, and the new job is available in the
+  candidates job filter afterwards.
+* If more than one existing job has the title given by the row, the row is
+  reported as invalid. Use `jobId` to choose between them.
 
 ```text
 GET  /candidates/export?jobId=&search=

@@ -441,6 +441,9 @@ export default function CandidatesPage() {
           jobId={jobFilter}
           onImported={() => {
             setPage(1);
+            // An import can create new jobs, so the dropdown is
+            // refetched to pick them up.
+            void loadJobs();
             return loadCandidates();
           }}
         />

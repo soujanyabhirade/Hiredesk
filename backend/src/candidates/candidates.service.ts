@@ -9,6 +9,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 import { db } from '../prisma/db.js';
+import { JobsService } from '../jobs/jobs.service.js';
 import { CreateCandidateDto } from './dto/create-candidate.dto.js';
 import { UpdateCandidateDto } from './dto/update-candidate.dto.js';
 import {
@@ -25,6 +26,10 @@ type CsvJob = {
 
 @Injectable()
 export class CandidatesService {
+  constructor(
+    private readonly jobsService: JobsService,
+  ) {}
+
   async create(
     createCandidateDto: CreateCandidateDto,
   ) {
@@ -325,6 +330,10 @@ export class CandidatesService {
    * is created through this.create(), so the import never bypasses the
    * existing business rules. A row that fails is reported and the remaining
    * rows are still imported.
+   *
+   * When a row carries only a jobTitle and no job that title belongs to, the
+   * job is created through JobsService so the candidate still gets linked to
+   * a real job.
    */
   async importCsv(content: string) {
     const { rows } = parseCandidateCsv(content);
@@ -358,7 +367,7 @@ export class CandidatesService {
 
     for (const row of rows) {
       try {
-        const jobId = this.resolveCsvJobId(
+        const jobId = await this.resolveCsvJobId(
           row,
           jobsById,
           jobsByTitle,
@@ -412,11 +421,24 @@ export class CandidatesService {
     };
   }
 
-  private resolveCsvJobId(
+  /**
+   * Works out which job a CSV row belongs to.
+   *
+   * When the row supplies a jobId that job must exist, and when the row also
+   * supplies a jobTitle the two have to agree. An unknown jobId is always an
+   * error: the job is never created from the title in that case, because the
+   * row has already asserted an explicit id that does not exist.
+   *
+   * When the row supplies only a jobTitle, an existing job with that title is
+   * reused. If the title is not taken yet, the job is created and written back
+   * into both lookup maps so later rows in the same file reuse it instead of
+   * creating a duplicate.
+   */
+  private async resolveCsvJobId(
     row: CandidateCsvParsedRow,
     jobsById: Map<number, CsvJob>,
     jobsByTitle: Map<string, CsvJob[]>,
-  ): number {
+  ): Promise<number> {
     if (row.jobId !== undefined) {
       const job = jobsById.get(row.jobId);
 
@@ -441,15 +463,27 @@ export class CandidatesService {
 
     const jobTitle = row.jobTitle ?? '';
 
+    const titleKey =
+      jobTitle.trim().toLowerCase();
+
     const matches =
-      jobsByTitle.get(
-        jobTitle.trim().toLowerCase(),
-      ) ?? [];
+      jobsByTitle.get(titleKey) ?? [];
 
     if (matches.length === 0) {
-      throw new BadRequestException(
-        `Job with title "${jobTitle}" not found`,
+      const createdJob = await this.jobsService.create(
+        { title: jobTitle },
       );
+
+      const created = {
+        id: createdJob.id,
+        title: createdJob.title,
+      };
+
+      jobsById.set(created.id, created);
+
+      jobsByTitle.set(titleKey, [created]);
+
+      return created.id;
     }
 
     if (matches.length > 1) {

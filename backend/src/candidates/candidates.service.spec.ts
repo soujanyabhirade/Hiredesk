@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { CandidatesService } from './candidates.service.js';
+import { JobsService } from '../jobs/jobs.service.js';
 
 jest.mock('../prisma/db.js', () => ({
   db: {
@@ -33,6 +34,8 @@ import { db } from '../prisma/db.js';
 describe('CandidatesService', () => {
   let service: CandidatesService;
 
+  let jobsService: JobsService;
+
   const mockCandidate = {
     id: 17,
     name: 'Test Candidate',
@@ -52,12 +55,17 @@ describe('CandidatesService', () => {
 
     const module: TestingModule =
       await Test.createTestingModule({
-        providers: [CandidatesService],
+        providers: [
+          CandidatesService,
+          JobsService,
+        ],
       }).compile();
 
     service = module.get<CandidatesService>(
       CandidatesService,
     );
+
+    jobsService = module.get<JobsService>(JobsService);
   });
 
   it('should be defined', () => {
@@ -467,6 +475,37 @@ describe('CandidatesService', () => {
       expect(csv).not.toContain('Other Person');
     });
 
+    it('should export a newly created job so it can be imported again', async () => {
+      // A job created during an import is now persisted, so the export has
+      // to carry both the id and the title for the same job.
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([
+        { id: 9, title: 'Backend Engineer' },
+      ]);
+
+      (
+        db.orm.public.Candidate.all as jest.Mock
+      ).mockResolvedValue([
+        {
+          ...mockCandidate,
+          name: 'Ada',
+          email: 'ada@example.com',
+          jobId: 9,
+        },
+      ]);
+
+      const csv = await service.exportCsv();
+
+      expect(csv).toContain(
+        'name,email,phone,jobId,jobTitle',
+      );
+
+      expect(csv).toContain(
+        'Ada,ada@example.com,9999999999,9,Backend Engineer',
+      );
+    });
+
     it('should export only candidates matching the search', async () => {
       (
         db.orm.public.Candidate.all as jest.Mock
@@ -595,14 +634,227 @@ describe('CandidatesService', () => {
       expect(result.errors[0].row).toBe(2);
     });
 
-    it('should report an unknown job title', async () => {
+    it('should create a job when the title does not exist yet', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([]);
+
+      jest
+        .spyOn(jobsService, 'create')
+        .mockResolvedValue({
+          id: 5,
+          title: 'Unknown Job',
+        } as never);
+
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(null);
+
+      (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
       const result = await service.importCsv(
         'name,email,jobTitle\nAda,ada@example.com,Unknown Job\n',
       );
 
+      expect(jobsService.create).toHaveBeenCalledTimes(1);
+
+      // Only the title is sent, so the optional fields keep their
+      // existing null defaults.
+      expect(jobsService.create).toHaveBeenCalledWith(
+        { title: 'Unknown Job' },
+      );
+
+      expect(
+        db.orm.public.Candidate.create,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'ada@example.com',
+          jobId: 5,
+        }),
+      );
+
+      expect(result).toEqual({
+        totalRows: 1,
+        imported: 1,
+        failed: 0,
+        errors: [],
+      });
+    });
+
+    it('should reuse an existing job when the title matches', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([
+        { id: 2, title: 'Frontend Developer' },
+      ]);
+
+      const createSpy = jest.spyOn(jobsService, 'create');
+
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(null);
+
+      (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
+      const result = await service.importCsv(
+        'name,email,jobTitle\nAda,ada@example.com,Frontend Developer\n',
+      );
+
+      expect(createSpy).not.toHaveBeenCalled();
+
+      expect(
+        db.orm.public.Candidate.create,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({ jobId: 2 }),
+      );
+
+      expect(result.imported).toBe(1);
+    });
+
+    it('should create the job once for rows sharing a new title', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([]);
+
+      const createSpy = jest
+        .spyOn(jobsService, 'create')
+        .mockResolvedValue({
+          id: 7,
+          title: 'Backend Engineer',
+        } as never);
+
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(null);
+
+      (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
+      const result = await service.importCsv(
+        [
+          'name,email,jobTitle',
+          'Row One,row1@example.com,Backend Engineer',
+          'Row Two,row2@example.com,Backend Engineer',
+          'Row Three,row3@example.com,Backend Engineer',
+        ].join('\n'),
+      );
+
+      // Three rows, one Job.
+      expect(createSpy).toHaveBeenCalledTimes(1);
+
+      expect(
+        db.orm.public.Candidate.create,
+      ).toHaveBeenCalledTimes(3);
+
+      for (const call of (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mock.calls) {
+        expect(call[0]).toEqual(
+          expect.objectContaining({ jobId: 7 }),
+        );
+      }
+
+      expect(result).toEqual({
+        totalRows: 3,
+        imported: 3,
+        failed: 0,
+        errors: [],
+      });
+    });
+
+    it('should treat a created job as reusable for later rows that reference it by title in a different case', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([]);
+
+      const createSpy = jest
+        .spyOn(jobsService, 'create')
+        .mockResolvedValue({
+          id: 8,
+          title: 'Data Engineer',
+        } as never);
+
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(null);
+
+      (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
+      const result = await service.importCsv(
+        [
+          'name,email,jobTitle',
+          'Row One,row1@example.com,Data Engineer',
+          'Row Two,row2@example.com,data engineer',
+        ].join('\n'),
+      );
+
+      expect(createSpy).toHaveBeenCalledTimes(1);
+      expect(result.imported).toBe(2);
+    });
+
+    it('should keep importing valid rows when one row has an unknown job id', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([
+        { id: 1, title: 'Developer' },
+      ]);
+
+      (
+        db.orm.public.Candidate.first as jest.Mock
+      ).mockResolvedValue(null);
+
+      (
+        db.orm.public.Candidate.create as jest.Mock
+      ).mockResolvedValue(mockCandidate);
+
+      const result = await service.importCsv(
+        [
+          'name,email,jobId,jobTitle',
+          'Good,good@example.com,1,Developer',
+          'Bad,bad@example.com,99,Backend Engineer',
+        ].join('\n'),
+      );
+
+      expect(result).toEqual({
+        totalRows: 2,
+        imported: 1,
+        failed: 1,
+        errors: [
+          {
+            row: 3,
+            message: 'Job with id 99 not found',
+          },
+        ],
+      });
+    });
+
+    it('should not create a job from the title when the given job id does not exist', async () => {
+      (
+        db.orm.public.Job.all as jest.Mock
+      ).mockResolvedValue([]);
+
+      const createSpy = jest.spyOn(jobsService, 'create');
+
+      const result = await service.importCsv(
+        'name,email,jobId,jobTitle\nAda,ada@example.com,99,Backend Engineer\n',
+      );
+
+      expect(createSpy).not.toHaveBeenCalled();
+
+      expect(
+        db.orm.public.Candidate.create,
+      ).not.toHaveBeenCalled();
+
       expect(result.errors[0]).toEqual({
         row: 2,
-        message: 'Job with title "Unknown Job" not found',
+        message: 'Job with id 99 not found',
       });
     });
 
