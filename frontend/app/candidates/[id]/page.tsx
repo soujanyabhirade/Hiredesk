@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { Alert } from "@/app/components/ui/Alert";
@@ -27,12 +27,16 @@ type Candidate = {
 
 export default function CandidateDetailsPage() {
   const params = useParams();
+  const router = useRouter();
+
   const candidateId = params.id as string;
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function loadCandidate() {
@@ -72,6 +76,62 @@ export default function CandidateDetailsPage() {
       loadCandidate();
     }
   }, [candidateId]);
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this candidate?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError("");
+      setSuccess("");
+
+      const response = await apiFetch(
+        `/candidates/${candidateId}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.replace("/login");
+          return;
+        }
+
+        const data = await response
+          .json()
+          .catch(() => null) as {
+          message?: string | string[];
+        } | null;
+
+        let message =
+          data?.message ||
+          "Failed to delete candidate.";
+
+        if (Array.isArray(message)) {
+          message = message.join(", ");
+        }
+
+        throw new Error(message);
+      }
+
+      setSuccess("Candidate deleted successfully.");
+
+      router.push("/");
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Could not delete candidate.");
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -131,9 +191,23 @@ export default function CandidateDetailsPage() {
   return (
     <main className="min-h-screen w-full bg-canvas py-8 sm:py-10">
       <div className="mx-auto max-w-3xl px-4">
-        <Button variant="ghost" size="sm" href="/">
+        {/* The ghost variant is too low contrast against the canvas,
+            so this uses the bordered secondary variant. */}
+        <Button variant="secondary" size="sm" href="/">
           ← Back to Candidates
         </Button>
+
+        {success && (
+          <Alert variant="success" className="mt-5">
+            {success}
+          </Alert>
+        )}
+
+        {error && (
+          <Alert variant="error" className="mt-5">
+            {error}
+          </Alert>
+        )}
 
         <div className="mt-5 rounded-xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-slate-200/50">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
@@ -277,8 +351,24 @@ export default function CandidateDetailsPage() {
             </div>
           )}
 
-          <div className="mt-8 border-t border-slate-200 pt-6">
-            <Button variant="primary" href="/">
+          <div className="mt-8 flex flex-wrap gap-3 border-t border-slate-200 pt-6">
+            <Button
+              variant="primary"
+              href={`/candidates/${candidateId}/edit`}
+            >
+              Edit Candidate
+            </Button>
+
+            <Button
+              variant="danger"
+              isLoading={deleting}
+              disabled={deleting}
+              onClick={handleDelete}
+            >
+              {deleting ? "Deleting…" : "Delete Candidate"}
+            </Button>
+
+            <Button variant="secondary" href="/">
               Back to Candidates
             </Button>
           </div>
