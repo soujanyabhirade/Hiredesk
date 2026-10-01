@@ -234,9 +234,10 @@ export default function CandidatesCsvPanel({
 
       <p className="mt-2 text-sm leading-relaxed text-slate-500">
         Columns: name, email, phone, jobId, jobTitle. Name and email
-        are required, together with either jobId or jobTitle. If the
-        jobTitle is new it is created as a job, and it then appears
-        in the job filter. If jobId is given it must already exist.
+        are required. Provide either jobId or jobTitle. jobId is
+        optional; if provided, it must already exist. If the jobTitle
+        is new, it is automatically created as a job and appears in
+        the job filter.
       </p>
 
       {error && (
