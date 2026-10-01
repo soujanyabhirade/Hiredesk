@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -7,13 +8,24 @@ import {
   Post,
   Put,
   Query,
+  Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+
+import { FileInterceptor } from '@nestjs/platform-express';
+import type {
+  Express,
+  Response,
+} from 'express';
 
 import { CandidatesService } from './candidates.service.js';
 
 import { CreateCandidateDto } from './dto/create-candidate.dto.js';
 import { UpdateCandidateDto } from './dto/update-candidate.dto.js';
+
+import { MAX_CANDIDATE_CSV_FILE_SIZE } from './csv/candidates-csv.util.js';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/guards/roles.guard.js';
@@ -59,6 +71,78 @@ export class CandidatesController {
   @Get('health')
   getHealth() {
     return this.candidatesService.getHealth();
+  }
+
+  @Post('import')
+  @Roles('ADMIN', 'RECRUITER')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize:
+          MAX_CANDIDATE_CSV_FILE_SIZE,
+      },
+    }),
+  )
+  importCandidates(
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException(
+        'A CSV file is required.',
+      );
+    }
+
+    const filename = (
+      file.originalname ?? ''
+    ).toLowerCase();
+
+    if (!filename.endsWith('.csv')) {
+      throw new BadRequestException(
+        'Only .csv files are supported.',
+      );
+    }
+
+    if (
+      !file.buffer ||
+      file.buffer.length === 0
+    ) {
+      throw new BadRequestException(
+        'The uploaded CSV file is empty.',
+      );
+    }
+
+    return this.candidatesService.importCsv(
+      file.buffer.toString('utf8'),
+    );
+  }
+
+  @Get('export')
+  async exportCandidates(
+    @Res() response: Response,
+    @Query('jobId') jobId?: string,
+    @Query('search') search?: string,
+  ) {
+    const csv = await this.candidatesService.exportCsv(
+      jobId ? Number(jobId) : undefined,
+      search || '',
+    );
+
+    const date = new Date()
+      .toISOString()
+      .slice(0, 10);
+
+    response.setHeader(
+      'Content-Type',
+      'text/csv; charset=utf-8',
+    );
+
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="hiredesk-candidates-${date}.csv"`,
+    );
+
+    // The byte order mark makes Excel open the file as UTF-8.
+    return response.send(`\uFEFF${csv}`);
   }
 
   @Get(':id')

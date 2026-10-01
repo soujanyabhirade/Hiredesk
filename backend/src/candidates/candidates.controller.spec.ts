@@ -12,6 +12,9 @@ jest.mock('../prisma/db.js', () => ({
     },
   },
 }));
+import {
+  BadRequestException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CandidatesController } from './candidates.controller.js';
@@ -30,6 +33,8 @@ describe('CandidatesController', () => {
     update: jest.fn(),
     delete: jest.fn(),
     getHealth: jest.fn(),
+    exportCsv: jest.fn(),
+    importCsv: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -215,6 +220,129 @@ describe('CandidatesController', () => {
       ).toHaveBeenCalled();
 
       expect(result).toEqual(health);
+    });
+  });
+
+  describe('importCandidates', () => {
+    function csvFile(
+      originalname: string,
+      content: string,
+    ) {
+      return {
+        originalname,
+        buffer: Buffer.from(content, 'utf8'),
+      } as Express.Multer.File;
+    }
+
+    it('should import the uploaded csv file', async () => {
+      const result = {
+        totalRows: 1,
+        imported: 1,
+        failed: 0,
+        errors: [],
+      };
+
+      mockCandidatesService.importCsv.mockResolvedValue(
+        result,
+      );
+
+      const uploaded = await controller.importCandidates(
+        csvFile(
+          'candidates.csv',
+          'name,email,jobId\nAda,ada@example.com,1\n',
+        ),
+      );
+
+      expect(
+        mockCandidatesService.importCsv,
+      ).toHaveBeenCalledWith(
+        'name,email,jobId\nAda,ada@example.com,1\n',
+      );
+
+      expect(uploaded).toEqual(result);
+    });
+
+    it('should throw when no file is uploaded', () => {
+      expect(() =>
+        controller.importCandidates(undefined),
+      ).toThrow(BadRequestException);
+    });
+
+    it('should throw when the file is not a csv file', () => {
+      expect(() =>
+        controller.importCandidates(
+          csvFile('candidates.txt', 'name'),
+        ),
+      ).toThrow('Only .csv files are supported.');
+    });
+
+    it('should throw when the uploaded file is empty', () => {
+      expect(() =>
+        controller.importCandidates(
+          csvFile('candidates.csv', ''),
+        ),
+      ).toThrow('The uploaded CSV file is empty.');
+    });
+  });
+
+  describe('exportCandidates', () => {
+    it('should send the csv file as a download', async () => {
+      mockCandidatesService.exportCsv.mockResolvedValue(
+        'name,email,phone,jobId,jobTitle\r\n',
+      );
+
+      const response = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      };
+
+      await controller.exportCandidates(
+        response as never,
+        '2',
+        'ada',
+      );
+
+      expect(
+        mockCandidatesService.exportCsv,
+      ).toHaveBeenCalledWith(2, 'ada');
+
+      expect(response.setHeader).toHaveBeenCalledWith(
+        'Content-Type',
+        'text/csv; charset=utf-8',
+      );
+
+      expect(
+        response.setHeader,
+      ).toHaveBeenCalledWith(
+        'Content-Disposition',
+        expect.stringContaining(
+          'attachment; filename="hiredesk-candidates-',
+        ),
+      );
+
+      expect(response.send).toHaveBeenCalledWith(
+        '\uFEFFname,email,phone,jobId,jobTitle\r\n',
+      );
+    });
+
+    it('should export without filters', async () => {
+      mockCandidatesService.exportCsv.mockResolvedValue('');
+
+      const response = {
+        setHeader: jest.fn(),
+        send: jest.fn(),
+      };
+
+      await controller.exportCandidates(
+        response as never,
+      );
+
+      expect(
+        mockCandidatesService.exportCsv,
+      ).toHaveBeenCalledWith(
+        undefined,
+        '',
+      );
     });
   });
 });

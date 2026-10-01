@@ -639,7 +639,8 @@
               "uniques": [
                 {
                   "columns": [
-                    "email"
+                    "email",
+                    "jobId"
                   ]
                 }
               ]
@@ -958,7 +959,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8c4a1bc58ef1df6e96a238d0f684e7a06792603e1f6993a75d205e56c6ec5fe5"
+    "storageHash": "e689286962601a1be3305f9be270a2d82f86039f6ebc78e714fef7f6334c9bd3"
   },
   "execution": {
     "executionHash": "0dd7195ff7cd7c2fa9ac1b5da5d03b638d54042b437689f9ebd1d79ce13a81fe",

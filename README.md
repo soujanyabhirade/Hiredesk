@@ -15,6 +15,7 @@ HireDesk is a recruitment management application for managing candidates, jobs, 
 ## Features
 
 - Candidate management with CRUD, search, filtering, sorting, and pagination
+- Candidate CSV import and CSV export
 - Job management with CRUD, filtering, sorting, and pagination
 - Interview scheduling and management
 - Interview feedback management
@@ -280,6 +281,8 @@ GET    /candidates/:id
 POST   /candidates
 PUT    /candidates/:id
 DELETE /candidates/:id
+POST   /candidates/import
+GET    /candidates/export
 ```
 
 ### Jobs
@@ -320,6 +323,42 @@ GET  /users
 POST /users
 PUT  /users/:id
 ```
+
+## Candidate CSV
+
+Both endpoints use the same columns, so an exported file can be edited and
+imported again:
+
+```text
+name,email,phone,jobId,jobTitle
+```
+
+* `name` and `email` are required.
+* `jobId` or `jobTitle` is required; `jobTitle` must match an existing job.
+* `phone` is optional and may be left empty.
+* `jobId` and `jobTitle` must not disagree on the same row.
+
+```text
+GET  /candidates/export?jobId=&search=
+POST /candidates/import      (multipart/form-data, field name: file)
+```
+
+Import requires the ADMIN or RECRUITER role, the same roles that can create
+candidates. Rows are validated with the same rules as `POST /candidates`, and
+each row is inserted through the candidate service, so the existing business
+rules (job must exist, one candidate per email per job) still apply. Invalid
+rows are reported instead of being inserted, and the response looks like this:
+
+```json
+{
+  "totalRows": 3,
+  "imported": 2,
+  "failed": 1,
+  "errors": [{ "row": 4, "message": "email must be an email" }]
+}
+```
+
+Row numbers include the header row, so they match what a spreadsheet shows.
 
 ## Testing
 

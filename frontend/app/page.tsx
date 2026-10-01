@@ -8,6 +8,7 @@ import { Input } from "@/app/components/ui/Input";
 import { Select } from "@/app/components/ui/Select";
 import { EmptyState } from "@/app/components/ui/EmptyState";
 import { Pagination } from "@/app/components/Pagination";
+import CandidatesCsvPanel from "@/app/components/CandidatesCsvPanel";
 import { CardSkeleton } from "@/app/components/ui/Skeleton";
 import { UserIcon, BriefcaseIcon } from "@/app/components/ui/Icons";
 
@@ -434,6 +435,15 @@ export default function CandidatesPage() {
             </Select>
           </div>
         </section>
+
+        <CandidatesCsvPanel
+          search={search}
+          jobId={jobFilter}
+          onImported={() => {
+            setPage(1);
+            return loadCandidates();
+          }}
+        />
 
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

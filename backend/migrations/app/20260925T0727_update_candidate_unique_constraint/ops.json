@@ -1,0 +1,86 @@
+[
+  {
+    "id": "dropConstraint.candidate.candidate_email_key",
+    "label": "Drop constraint \"candidate_email_key\" on \"candidate\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "candidate_email_key",
+        "table": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"candidate_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"candidate_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"candidate\" DROP CONSTRAINT \"candidate_email_key\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"candidate_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.candidate.candidate_email_jobId_key",
+    "label": "Add unique constraint on \"candidate\" (email, jobId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "candidate_email_jobId_key",
+        "table": "candidate"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"candidate_email_jobId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_jobId_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"candidate_email_jobId_key\"",
+        "sql": "ALTER TABLE \"public\".\"candidate\" ADD CONSTRAINT \"candidate_email_jobId_key\" UNIQUE (\"email\", \"jobId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"candidate_email_jobId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "candidate_email_jobId_key",
+          "public",
+          "\"public\".\"candidate\""
+        ]
+      }
+    ]
+  }
+]
