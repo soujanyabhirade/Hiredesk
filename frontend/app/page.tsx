@@ -466,19 +466,19 @@ export default function CandidatesPage() {
             {candidates.map((candidate) => (
               <div
                 key={candidate.id}
-                className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+                className="min-w-0 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200/50 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
                       {getInitials(candidate.name)}
                     </div>
 
                     <div className="min-w-0">
-                      <h2 className="truncate text-lg font-semibold text-slate-900">
+                      <h2 className="break-words text-lg font-semibold leading-snug text-slate-900">
                         {candidate.name}
                       </h2>
-                      <p className="truncate text-sm text-slate-500">
+                      <p className="break-all text-sm text-slate-500">
                         {candidate.email}
                       </p>
                     </div>
