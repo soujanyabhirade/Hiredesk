@@ -30,8 +30,6 @@ firebase.initializeApp({
 // subscribe, which happens on the page via getToken(), not in this worker. Only
 // the public key ever reaches the client, and only the server holds a private one.
 
-const FALLBACK_ICON = "/icon-192x192.png";
-
 self.addEventListener("install", () => {
   self.skipWaiting();
 });
@@ -40,37 +38,27 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Instantiating messaging() makes the SDK attach its own internal "push"
-// handler, which displays notification payloads on its own. Registering
-// onBackgroundMessage() takes that internal handler over: the SDK stops
-// displaying by itself and hands the parsed payload to this callback instead.
-// A hand-rolled self.addEventListener("push", ...) must therefore NOT also
-// exist here, otherwise every message is handled and displayed twice.
-const messaging = firebase.messaging();
-
 /**
- * Runs when a push arrives while the page is in the background or closed.
- * Foreground messages are handled by the page instead (see NotificationPermissionButton).
+ * Background and closed-tab notifications are displayed by the Firebase
+ * Messaging SDK itself, because the messages the backend sends carry a
+ * "notification" payload. This worker therefore registers NO push handler and
+ * NO onBackgroundMessage callback: instantiating messaging() is all that is
+ * needed, and adding a display path on top of it is what produced two
+ * notifications per message (one with an empty tag from the SDK, one tagged
+ * "hiredesk-notification" from this file).
+ *
+ * The SDK does not handle clicks, so notificationclick below stays.
+ *
+ * Foreground messages never reach the service worker: they are handled by the
+ * page (see NotificationPermissionButton).
  */
-messaging.onBackgroundMessage((payload) => {
-  const notification = (payload && payload.notification) || {};
-  const data = (payload && payload.data) || {};
-
-  return self.registration.showNotification(notification.title || "HireDesk", {
-    body: notification.body || "",
-    icon: notification.image || FALLBACK_ICON,
-    badge: notification.badge || FALLBACK_ICON,
-    tag: data.tag || "hiredesk-notification",
-    renotify: false,
-    data: {
-      url: data.url || "/",
-    },
-  });
-});
+const messaging = firebase.messaging();
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
+  // Messages sent today carry only a notification payload, so there is no
+  // data.url to read and this falls back to the HireDesk home page.
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
 
   event.waitUntil(
