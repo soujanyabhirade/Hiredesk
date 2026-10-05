@@ -16,6 +16,22 @@ import { CheckCircleIcon } from "@/app/components/ui/Icons";
 
 type PermissionState = NotificationPermission | "unknown";
 
+const DEFAULT_FOREGROUND_TITLE = "HireDesk";
+const DEFAULT_FOREGROUND_BODY = "You have a new notification.";
+
+/**
+ * A foreground FCM payload, narrowed as far as the display needs. Anything
+ * unexpected falls back to the defaults instead of rendering an empty
+ * notification.
+ */
+type ForegroundPayload = {
+  notification?: { title?: unknown; body?: unknown };
+};
+
+function readText(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
 const supportMessages: Record<Exclude<PushSupport, "ready">, string> = {
   unconfigured: "Push notifications are not configured yet.",
   "insecure-context":
@@ -42,8 +58,9 @@ export default function NotificationPermissionButton() {
     });
   }, []);
 
-  // Foreground messages never reach the service worker, so the page has to
-  // listen for them itself to prove the end-to-end path works.
+  // Foreground messages never reach the service worker, so the page shows the
+  // notification itself while the tab is open. Closed tabs keep using the
+  // service worker path in firebase-messaging-sw.js, which is unchanged.
   useEffect(() => {
     if (support !== "ready") {
       return;
@@ -52,7 +69,20 @@ export default function NotificationPermissionButton() {
     let unsubscribe: (() => void) | undefined;
 
     void onForegroundMessage((payload) => {
-      console.log("[HireDesk] Foreground FCM message:", payload);
+      const notification = (payload as ForegroundPayload | null | undefined)
+        ?.notification;
+
+      const title =
+        readText(notification?.title) ?? DEFAULT_FOREGROUND_TITLE;
+      const body = readText(notification?.body) ?? DEFAULT_FOREGROUND_BODY;
+
+      // The Enable notifications flow already asked for permission, so this
+      // handler only displays and never triggers a permission prompt.
+      if (Notification.permission !== "granted") {
+        return;
+      }
+
+      new Notification(title, { body });
     })
       .then((stop) => {
         unsubscribe = stop;
