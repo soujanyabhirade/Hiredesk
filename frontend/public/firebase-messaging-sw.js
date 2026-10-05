@@ -39,26 +39,49 @@ self.addEventListener("activate", (event) => {
 });
 
 /**
- * Background and closed-tab notifications are displayed by the Firebase
- * Messaging SDK itself, because the messages the backend sends carry a
- * "notification" payload. This worker therefore registers NO push handler and
- * NO onBackgroundMessage callback: instantiating messaging() is all that is
- * needed, and adding a display path on top of it is what produced two
- * notifications per message (one with an empty tag from the SDK, one tagged
- * "hiredesk-notification" from this file).
+ * Background and closed-tab notifications are displayed HERE, exactly once.
  *
- * The SDK does not handle clicks, so notificationclick below stays.
+ * The backend sends DATA-ONLY messages (no "notification" block) and that is
+ * load-bearing. The Firebase Messaging SDK's push handler auto-displays a
+ * notification whenever the payload carries a "notification" object, and it
+ * does so unconditionally: in @firebase/messaging 12.19.0 the call to
+ * showNotification() sits in onPush() *before* the onBackgroundMessage branch
+ * and is gated only on `!!internalPayload.notification`. There is no flag,
+ * option or export to suppress it. That auto-created Notification is created
+ * but never renders as a visible popup on Windows, and adding a display path
+ * on top of it is what previously produced two notifications per message.
  *
- * Foreground messages never reach the service worker: they are handled by the
- * page (see NotificationPermissionButton).
+ * With no "notification" block that auto-display branch is skipped, so this
+ * handler is the only thing that shows a notification.
+ *
+ * Foreground messages never reach the service worker: while a tab is visible
+ * the SDK posts them to the window instead (see NotificationPermissionButton).
  */
 const messaging = firebase.messaging();
+
+const DEFAULT_TITLE = "HireDesk";
+const DEFAULT_BODY = "You have a new notification.";
+
+function readText(value) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+messaging.onBackgroundMessage((payload) => {
+  const data = (payload && payload.data) || {};
+
+  const title = readText(data.title) || DEFAULT_TITLE;
+  const body = readText(data.body) || DEFAULT_BODY;
+
+  return self.registration.showNotification(title, {
+    body,
+    // Only same-origin paths are ever navigated to, see notificationclick.
+    data: { url: readText(data.url) },
+  });
+});
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  // Messages sent today carry only a notification payload, so there is no
-  // data.url to read and this falls back to the HireDesk home page.
   const targetUrl = (event.notification.data && event.notification.data.url) || "/";
 
   event.waitUntil(

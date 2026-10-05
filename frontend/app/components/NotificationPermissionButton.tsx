@@ -23,9 +23,15 @@ const DEFAULT_FOREGROUND_BODY = "You have a new notification.";
  * A foreground FCM payload, narrowed as far as the display needs. Anything
  * unexpected falls back to the defaults instead of rendering an empty
  * notification.
+ *
+ * Messages are sent data-only so the service worker owns background display,
+ * which means "data" is the populated block here. The "notification" branch is
+ * kept as a fallback so a message sent from the Firebase console, which carries
+ * a notification block, still shows its own text.
  */
 type ForegroundPayload = {
   notification?: { title?: unknown; body?: unknown };
+  data?: { title?: unknown; body?: unknown };
 };
 
 function readText(value: unknown): string | undefined {
@@ -69,12 +75,18 @@ export default function NotificationPermissionButton() {
     let unsubscribe: (() => void) | undefined;
 
     void onForegroundMessage((payload) => {
-      const notification = (payload as ForegroundPayload | null | undefined)
-        ?.notification;
+      const parsed = payload as ForegroundPayload | null | undefined;
+      const data = parsed?.data;
+      const notification = parsed?.notification;
 
       const title =
-        readText(notification?.title) ?? DEFAULT_FOREGROUND_TITLE;
-      const body = readText(notification?.body) ?? DEFAULT_FOREGROUND_BODY;
+        readText(data?.title) ??
+        readText(notification?.title) ??
+        DEFAULT_FOREGROUND_TITLE;
+      const body =
+        readText(data?.body) ??
+        readText(notification?.body) ??
+        DEFAULT_FOREGROUND_BODY;
 
       // The Enable notifications flow already asked for permission, so this
       // handler only displays and never triggers a permission prompt.

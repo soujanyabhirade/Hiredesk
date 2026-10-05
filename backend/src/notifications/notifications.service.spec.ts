@@ -239,7 +239,7 @@ describe('NotificationsService', () => {
       error: Object.assign(new Error(code), { code }),
     });
 
-    it('sends to every token owned by the user', async () => {
+    it('sends a data-only payload so the service worker owns display', async () => {
       allTokensMock.mockResolvedValue([
         storedToken('token-a', 1),
         storedToken('token-b', 2),
@@ -251,9 +251,11 @@ describe('NotificationsService', () => {
 
       const result = await service.sendToUser(7, 'Interview', 'At 3pm');
 
+      // The absence of a "notification" block is load-bearing: it is what makes
+      // the Firebase service worker skip its own unconditional auto-display.
       expect(sendEachForMulticast).toHaveBeenCalledWith({
         tokens: ['token-a', 'token-b'],
-        notification: {
+        data: {
           title: 'Interview',
           body: 'At 3pm',
         },

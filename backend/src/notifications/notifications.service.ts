@@ -90,6 +90,16 @@ export class NotificationsService {
    * One user may hold several tokens (one per browser or device), so all of
    * them are targeted in a single multicast request. A token that FCM reports
    * as permanently invalid is deleted so later sends stop paying for it.
+   *
+   * The message is deliberately DATA-ONLY: it carries no "notification" block.
+   * That block is what makes the Firebase service worker display the
+   * notification itself, and it does so unconditionally, before any
+   * onBackgroundMessage callback runs, with no option to suppress it. On
+   * Windows the resulting Notification is created but never surfaces as a
+   * visible popup. Sending data only leaves display to the one handler this
+   * project controls, so exactly one notification is shown.
+   *
+   * Every FCM data value must be a string.
    */
   async sendToUser(
     userId: number,
@@ -104,7 +114,7 @@ export class NotificationsService {
 
     const { responses } = await getFirebaseMessaging().sendEachForMulticast({
       tokens: tokens.map((row) => row.token),
-      notification: {
+      data: {
         title,
         body,
       },
