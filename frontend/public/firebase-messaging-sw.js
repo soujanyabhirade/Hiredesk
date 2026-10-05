@@ -40,36 +40,32 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Instantiating messaging() makes the SDK attach its own internal "push"
+// handler, which displays notification payloads on its own. Registering
+// onBackgroundMessage() takes that internal handler over: the SDK stops
+// displaying by itself and hands the parsed payload to this callback instead.
+// A hand-rolled self.addEventListener("push", ...) must therefore NOT also
+// exist here, otherwise every message is handled and displayed twice.
+const messaging = firebase.messaging();
+
 /**
  * Runs when a push arrives while the page is in the background or closed.
  * Foreground messages are handled by the page instead (see NotificationPermissionButton).
  */
-self.addEventListener("push", (event) => {
-  let payload = {};
+messaging.onBackgroundMessage((payload) => {
+  const notification = (payload && payload.notification) || {};
+  const data = (payload && payload.data) || {};
 
-  if (event.data) {
-    try {
-      payload = event.data.json() || {};
-    } catch {
-      payload = { notification: { body: event.data.text() } };
-    }
-  }
-
-  const notification = payload.notification || {};
-  const data = payload.data || {};
-
-  event.waitUntil(
-    self.registration.showNotification(notification.title || "HireDesk", {
-      body: notification.body || "",
-      icon: notification.image || FALLBACK_ICON,
-      badge: notification.badge || FALLBACK_ICON,
-      tag: data.tag || "hiredesk-notification",
-      renotify: false,
-      data: {
-        url: data.url || "/",
-      },
-    }),
-  );
+  return self.registration.showNotification(notification.title || "HireDesk", {
+    body: notification.body || "",
+    icon: notification.image || FALLBACK_ICON,
+    badge: notification.badge || FALLBACK_ICON,
+    tag: data.tag || "hiredesk-notification",
+    renotify: false,
+    data: {
+      url: data.url || "/",
+    },
+  });
 });
 
 self.addEventListener("notificationclick", (event) => {
@@ -93,7 +89,7 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 /**
- * Exposed for manual verification in DevTools while testing Phase 1:
+ * Kept for manual verification in DevTools:
  *   firebaseMessaging.getToken().then(console.log)
  */
-self.firebaseMessaging = firebase.messaging();
+self.firebaseMessaging = messaging;
