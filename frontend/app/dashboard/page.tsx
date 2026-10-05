@@ -8,6 +8,7 @@ import { Button } from "@/app/components/ui/Button";
 import { StatCard } from "@/app/components/ui/StatCard";
 import { Badge } from "@/app/components/ui/Badge";
 import { EmptyState } from "@/app/components/ui/EmptyState";
+import NotificationPermissionButton from "@/app/components/NotificationPermissionButton";
 import {
   UserIcon,
   BriefcaseIcon,
@@ -364,6 +365,8 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </section>
+
+            <NotificationPermissionButton />
           </>
         ) : null}
       </div>
