@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 import {
   getMissingFirebaseEnvVars,
   getPushSupport,
@@ -28,6 +29,7 @@ export default function NotificationPermissionButton() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [token, setToken] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -69,6 +71,7 @@ export default function NotificationPermissionButton() {
     setBusy(true);
     setError("");
     setToken("");
+    setSubscribed(false);
 
     try {
       const result = await Notification.requestPermission();
@@ -85,6 +88,29 @@ export default function NotificationPermissionButton() {
 
       const fcmToken = await requestFcmToken();
       setToken(fcmToken);
+
+      // apiFetch attaches the in-memory access token and refreshes it on 401,
+      // so the notification token is only ever sent from an authenticated page.
+      const response = await apiFetch("/notifications/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ token: fcmToken, platform: "web" }),
+      });
+
+      const data = (await response.json().catch(() => null)) as {
+        message?: string;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            `Could not save your notification token (${response.status}).`,
+        );
+      }
+
+      setSubscribed(true);
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -139,12 +165,15 @@ export default function NotificationPermissionButton() {
         {token && (
           <Alert variant="info" className="mb-4">
             <p className="font-semibold">
-              FCM registration token (Phase 1 preview only)
+              {subscribed
+                ? "FCM registration token saved"
+                : "FCM registration token"}
             </p>
             <p className="mt-1 break-all font-mono text-xs">{token}</p>
             <p className="mt-2 text-xs">
-              This token is not stored yet. Phase 2 will persist it against your
-              HireDesk account.
+              {subscribed
+                ? "Saved against your HireDesk account. Send test messages from the Firebase console to verify delivery."
+                : "Your browser issued a token, but it has not been saved to your account yet."}
             </p>
           </Alert>
         )}

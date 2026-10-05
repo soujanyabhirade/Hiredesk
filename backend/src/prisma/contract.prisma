@@ -56,4 +56,14 @@ model User {
   activationExpiresAt  TimestamptzString?
   createdAt            TimestamptzString @default(now())
   updatedAt            temporal.updatedAtString()
+  pushTokens           PushToken[]
+}
+model PushToken {
+  id        Int              @id @default(autoincrement())
+  user      User             @relation(fields:[userId], references:[id])
+  userId    Int
+  token     String           @unique
+  platform  String           @default("web")
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
 }
