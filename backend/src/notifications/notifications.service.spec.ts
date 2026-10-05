@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { NotificationsService } from './notifications.service.js';
@@ -16,12 +17,23 @@ jest.mock('../prisma/db.js', () => ({
   },
 }));
 
+jest.mock('./firebase-admin.js', () => ({
+  getFirebaseMessaging: jest.fn(),
+}));
+
 import { db } from '../prisma/db.js';
+import { getFirebaseMessaging } from './firebase-admin.js';
 
 describe('NotificationsService', () => {
   let service: NotificationsService;
 
   let updateMock: jest.Mock;
+
+  let allTokensMock: jest.Mock;
+
+  let deleteMock: jest.Mock;
+
+  let sendEachForMulticast: jest.Mock;
 
   const token = 'fcm-registration-token-value';
 
@@ -39,8 +51,20 @@ describe('NotificationsService', () => {
 
     updateMock = jest.fn().mockResolvedValue({});
 
+    allTokensMock = jest.fn().mockResolvedValue([]);
+
+    deleteMock = jest.fn().mockResolvedValue({});
+
+    sendEachForMulticast = jest.fn().mockResolvedValue({ responses: [] });
+
+    (getFirebaseMessaging as jest.Mock).mockReturnValue({
+      sendEachForMulticast,
+    });
+
     (db.orm.public.PushToken.where as jest.Mock).mockReturnValue({
       update: updateMock,
+      all: allTokensMock,
+      delete: deleteMock,
     });
 
     const module: TestingModule =
@@ -197,6 +221,143 @@ describe('NotificationsService', () => {
         service.subscribe({ token, platform: 'web' }, 7),
       ).rejects.toBe(failure);
       expect(updateMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('sendToUser', () => {
+    const storedToken = (value: string, id: number) => ({
+      id,
+      userId: 7,
+      token: value,
+      platform: 'web',
+      createdAt: '2026-10-05T10:00:00Z',
+      updatedAt: '2026-10-05T10:00:00Z',
+    });
+
+    const failure = (code: string) => ({
+      success: false,
+      error: Object.assign(new Error(code), { code }),
+    });
+
+    it('sends to every token owned by the user', async () => {
+      allTokensMock.mockResolvedValue([
+        storedToken('token-a', 1),
+        storedToken('token-b', 2),
+      ]);
+
+      sendEachForMulticast.mockResolvedValue({
+        responses: [{ success: true }, { success: true }],
+      });
+
+      const result = await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(sendEachForMulticast).toHaveBeenCalledWith({
+        tokens: ['token-a', 'token-b'],
+        notification: {
+          title: 'Interview',
+          body: 'At 3pm',
+        },
+      });
+      expect(result).toEqual({ sent: 2, failed: 0, pruned: 0 });
+      expect(deleteMock).not.toHaveBeenCalled();
+    });
+
+    it('returns 0/0/0 when the user has no tokens', async () => {
+      allTokensMock.mockResolvedValue([]);
+
+      const result = await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(result).toEqual({ sent: 0, failed: 0, pruned: 0 });
+      expect(sendEachForMulticast).not.toHaveBeenCalled();
+    });
+
+    it('deletes a token FCM reports as not registered', async () => {
+      allTokensMock.mockResolvedValue([
+        storedToken('token-a', 1),
+        storedToken('token-b', 2),
+      ]);
+
+      sendEachForMulticast.mockResolvedValue({
+        responses: [
+          { success: true },
+          failure('messaging/registration-token-not-registered'),
+        ],
+      });
+
+      const result = await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(db.orm.public.PushToken.where).toHaveBeenCalledWith({
+        token: 'token-b',
+      });
+      expect(deleteMock).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ sent: 1, failed: 1, pruned: 1 });
+    });
+
+    it('deletes a token FCM reports as an invalid argument', async () => {
+      allTokensMock.mockResolvedValue([storedToken('token-a', 1)]);
+
+      sendEachForMulticast.mockResolvedValue({
+        responses: [failure('messaging/invalid-argument')],
+      });
+
+      const result = await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(deleteMock).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({ sent: 0, failed: 1, pruned: 1 });
+    });
+
+    it('keeps the token when the failure is transient', async () => {
+      allTokensMock.mockResolvedValue([
+        storedToken('token-a', 1),
+        storedToken('token-b', 2),
+      ]);
+
+      sendEachForMulticast.mockResolvedValue({
+        responses: [
+          failure('messaging/internal-error'),
+          failure('messaging/quota-exceeded'),
+        ],
+      });
+
+      const result = await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(deleteMock).not.toHaveBeenCalled();
+      expect(result).toEqual({ sent: 0, failed: 2, pruned: 0 });
+    });
+
+    it('uses only the requested user id', async () => {
+      allTokensMock.mockResolvedValue([storedToken('token-a', 1)]);
+
+      sendEachForMulticast.mockResolvedValue({
+        responses: [{ success: true }],
+      });
+
+      await service.sendToUser(7, 'Interview', 'At 3pm');
+
+      expect(db.orm.public.PushToken.where).toHaveBeenCalledWith({
+        userId: 7,
+      });
+      expect(db.orm.public.PushToken.where).not.toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 99 }),
+      );
+    });
+
+    it('propagates ServiceUnavailableException when Firebase is unconfigured', async () => {
+      allTokensMock.mockResolvedValue([storedToken('token-a', 1)]);
+
+      const unconfigured = new ServiceUnavailableException(
+        'Push notification delivery is not configured.',
+      );
+
+      (getFirebaseMessaging as jest.Mock).mockImplementation(() => {
+        throw unconfigured;
+      });
+
+      await expect(
+        service.sendToUser(7, 'Interview', 'At 3pm'),
+      ).rejects.toBe(unconfigured);
+      expect(sendEachForMulticast).not.toHaveBeenCalled();
+      expect(deleteMock).not.toHaveBeenCalled();
     });
   });
 });
