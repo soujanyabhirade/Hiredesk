@@ -66,17 +66,23 @@ function readText(value) {
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-messaging.onBackgroundMessage((payload) => {
+messaging.onBackgroundMessage(async (payload) => {
   const data = (payload && payload.data) || {};
 
   const title = readText(data.title) || DEFAULT_TITLE;
   const body = readText(data.body) || DEFAULT_BODY;
 
-  return self.registration.showNotification(title, {
-    body,
-    // Only same-origin paths are ever navigated to, see notificationclick.
-    data: { url: readText(data.url) },
-  });
+  try {
+    await self.registration.showNotification(title, {
+      body,
+      // Only same-origin paths are ever navigated to, see notificationclick.
+      data: { url: readText(data.url) },
+    });
+    console.info("[HireDesk FCM] showNotification resolved");
+  } catch (error) {
+    console.error("[HireDesk FCM] showNotification rejected", error);
+    throw error;
+  }
 });
 
 self.addEventListener("notificationclick", (event) => {
